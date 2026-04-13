@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codesavan — 5-Day Client Acquisition Playbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f2eb;
+    --cream: #f0ebe0;
+    --accent: #e85c2a;
+    --accent2: #2a7ae8;
+    --gold: #d4a843;
+    --muted: #6b6660;
+    --border: #2a2520;
+    --card: #141210;
+    --tag-bg: #1e1a16;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    padding: 80px 40px 60px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(232,92,42,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 8vw, 100px);
+    line-height: 0.92;
+    letter-spacing: 1px;
+    color: var(--white);
+    max-width: 900px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero-sub {
+    margin-top: 28px;
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 600px;
+    font-weight: 300;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    border-left: 2px solid var(--accent);
+    padding-left: 16px;
+  }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--white);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+
+  /* NAV */
+  .toc {
+    padding: 32px 40px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .toc a {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SECTIONS */
+  .section {
+    padding: 64px 40px;
+    border-bottom: 1px solid var(--border);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 48px;
+  }
+  .section-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    color: var(--border);
+    line-height: 0.85;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .section-title-wrap {}
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    line-height: 1;
+    color: var(--white);
+  }
+
+  /* CARDS */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+    margin: 32px 0;
+  }
+  .card {
+    background: var(--card);
+    padding: 28px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.3s;
+  }
+  .card:hover::after { transform: scaleY(1); }
+  .card-icon { font-size: 24px; margin-bottom: 16px; }
+  .card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+  .card p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  .card .tag {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+
+  /* NICHE TABLE */
+  .niche-table { width: 100%; border-collapse: collapse; margin: 28px 0; }
+  .niche-table th {
+    background: var(--tag-bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .niche-table td {
+    padding: 14px 16px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--white);
+  }
+  .niche-table tr:hover td { background: var(--tag-bg); }
+  .urgency-high { color: #e85c5c; font-weight: 600; }
+  .urgency-med { color: var(--gold); font-weight: 600; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .badge-hot { background: rgba(232,92,42,0.15); color: var(--accent); border: 1px solid rgba(232,92,42,0.3); }
+  .badge-warm { background: rgba(212,168,67,0.15); color: var(--gold); border: 1px solid rgba(212,168,67,0.3); }
+
+  /* SCRIPT BLOCK */
+  .script-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 32px;
+    margin: 24px 0;
+    position: relative;
+  }
+  .script-block .script-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+  .script-line {
+    font-size: 15px;
+    color: var(--white);
+    line-height: 1.8;
+    font-style: italic;
+  }
+  .script-note {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* OBJECTION BLOCKS */
+  .objection-wrap { display: flex; flex-direction: column; gap: 16px; margin: 24px 0; }
+  .obj-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+  .obj-q, .obj-a {
+    padding: 20px 24px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .obj-q {
+    border-right: 1px solid var(--border);
+    color: #e85c5c;
+  }
+  .obj-q::before {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    content: "PROSPECT SAYS";
+  }
+  .obj-a { color: var(--white); }
+  .obj-a::before {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    content: "YOU SAY";
+  }
+
+  /* DAILY PLAN */
+  .day-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin: 28px 0; }
+  .day-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 24px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .day-card.active { border-color: var(--accent); }
+  .day-card.active::before {
+    content: 'KEY DAY';
+    position: absolute;
+    top: 10px; right: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .day-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: var(--border);
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  .day-card.active .day-num { color: var(--accent); opacity: 0.4; }
+  .day-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+  .day-metric { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .day-metric span { color: var(--white); font-weight: 500; }
+
+  /* MATH BOX */
+  .math-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    margin: 28px 0;
+  }
+  .math-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .math-row:last-child { border-bottom: none; }
+  .math-row .label { color: var(--muted); }
+  .math-row .value { font-family: 'DM Mono', monospace; color: var(--white); }
+  .math-row.total .label { color: var(--white); font-weight: 600; }
+  .math-row.total .value { color: var(--accent); font-size: 18px; }
+
+  /* STEPS */
+  .steps { display: flex; flex-direction: column; gap: 0; margin: 28px 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 24px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .step h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .step p { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+
+  /* SHEETS STRUCTURE */
+  .sheet-table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+  .sheet-table th {
+    background: rgba(42,122,232,0.1);
+    border: 1px solid rgba(42,122,232,0.2);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    padding: 10px 14px;
+    text-align: left;
+    letter-spacing: 1px;
+  }
+  .sheet-table td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  /* SCALING */
+  .timeline {
+    display: flex;
+    gap: 0;
+    margin: 32px 0;
+    position: relative;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 24px; left: 0; right: 0;
+    height: 1px;
+    background: var(--border);
+  }
+  .tl-item { flex: 1; padding-top: 52px; padding-right: 24px; position: relative; }
+  .tl-dot {
+    position: absolute;
+    top: 16px; left: 0;
+    width: 18px; height: 18px;
+    background: var(--black);
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+  }
+  .tl-item.done .tl-dot { background: var(--accent); }
+  .tl-phase {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .tl-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .tl-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* HIGHLIGHT BOX */
+  .highlight {
+    background: rgba(232,92,42,0.06);
+    border: 1px solid rgba(232,92,42,0.2);
+    border-left: 3px solid var(--accent);
+    padding: 20px 24px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: var(--white);
+  }
+  .highlight strong { color: var(--accent); }
+
+  /* LIST */
+  .styled-list { list-style: none; margin: 16px 0; }
+  .styled-list li {
+    padding: 8px 0 8px 20px;
+    position: relative;
+    font-size: 14px;
+    color: var(--muted);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .styled-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  /* RED FLAG */
+  .red-flags { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+  .flag {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(232,92,42,0.05);
+    border: 1px solid rgba(232,92,42,0.15);
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .flag::before { content: '⚠'; font-size: 14px; flex-shrink: 0; }
+
+  /* GREEN FLAG */
+  .green-flags { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+  .gflag {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(42,200,100,0.05);
+    border: 1px solid rgba(42,200,100,0.15);
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .gflag::before { content: '✓'; color: #2ac864; font-size: 14px; flex-shrink: 0; }
+
+  /* FOOTER */
+  footer {
+    padding: 48px 40px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  footer .brand {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--white);
+    letter-spacing: 3px;
+  }
+  footer p { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  h2.sub {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    margin: 40px 0 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  p.body { font-size: 14px; color: var(--muted); margin-bottom: 16px; line-height: 1.75; }
+
+  @media(max-width: 768px) {
+    .hero { padding: 48px 24px 40px; }
+    .section { padding: 48px 24px; }
+    .toc { padding: 20px 24px; }
+    .day-grid { grid-template-columns: 1fr 1fr; }
+    .obj-card { grid-template-columns: 1fr; }
+    .obj-q { border-right: none; border-bottom: 1px solid var(--border); }
+    .timeline { flex-direction: column; }
+    .timeline::before { display: none; }
+    .tl-item { padding-top: 0; padding-left: 32px; }
+    .tl-dot { top: 0; }
+    .hero-stats { gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Codesavan — Confidential Playbook</div>
+  <h1>5-Day Client<br><span>Acquisition</span><br>Sprint</h1>
+  <p class="hero-sub">A complete execution system to generate paying clients before your JustCall free trial expires — using 16 remote callers, 8,000 leads, and one razor-sharp script.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">16</div><div class="stat-label">Callers Deployed</div></div>
+    <div class="stat"><div class="stat-num">8,000</div><div class="stat-label">Total Leads</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Days to Revenue</div></div>
+    <div class="stat"><div class="stat-num">$32K+</div><div class="stat-label">Revenue Potential</div></div>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <a href="#niches">01 Niches</a>
+  <a href="#hiring">02 Hiring System</a>
+  <a href="#onboarding">03 Onboarding</a>
+  <a href="#script">04 Call Script</a>
+  <a href="#daily">05 Daily Plan</a>
+  <a href="#tracking">06 Tracking</a>
+  <a href="#performance">07 Performance</a>
+  <a href="#scaling">08 Scaling</a>
+</div>
+
+<!-- SECTION 1: NICHES -->
+<div class="section" id="niches">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Target Markets</div>
+      <div class="section-title">Expanded Niche List</div>
+    </div>
+  </div>
+
+  <table class="niche-table">
+    <thead>
+      <tr>
+        <th>Niche</th>
+        <th>Why It Works</th>
+        <th>Buying Behavior</th>
+        <th>Urgency</th>
+        <th>Deal Tolerance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Roofers</strong> <span class="badge badge-hot">HOT</span></td>
+        <td>Storm-chasing, seasonal urgency. $10K–$30K avg job. Many run off referrals with zero web presence.</td>
+        <td>Owner-operated. Decides in the call. Moves fast when it feels right.</td>
+        <td class="urgency-high">VERY HIGH</td>
+        <td>$1K–$2K easily</td>
+      </tr>
+      <tr>
+        <td><strong>HVAC</strong> <span class="badge badge-hot">HOT</span></td>
+        <td>Year-round demand. Seasonal spikes in summer/winter. Owners are cash-rich and time-poor.</td>
+        <td>Practical buyers. Want leads NOW. Price sensitive but ROI-focused.</td>
+        <td class="urgency-high">HIGH</td>
+        <td>$1K–$1.5K</td>
+      </tr>
+      <tr>
+        <td><strong>Plumbers</strong> <span class="badge badge-hot">HOT</span></td>
+        <td>Emergency-call business. Google visibility = phone ringing. Most have outdated or no website.</td>
+        <td>Direct, no-nonsense. Need quick ROI proof. Trust demos.</td>
+        <td class="urgency-high">HIGH</td>
+        <td>$800–$1.5K</td>
+      </tr>
+      <tr>
+        <td><strong>Electricians</strong> <span class="badge badge-warm">WARM</span></td>
+        <td>Licensed pros with high job values. Many work solo with zero digital presence.</td>
+        <td>Skeptical but once sold, loyal. Prefer a demo before committing.</td>
+        <td class="urgency-med">MEDIUM</td>
+        <td>$800–$1.2K</td>
+      </tr>
+      <tr>
+        <td><strong>Landscapers</strong> <span class="badge badge-warm">WARM</span></td>
+        <td>Spring/summer seasonal rush. Compete heavily for residential clients. Photos + website = wins.</td>
+        <td>Visual buyers. Love before/after. Quick to decide in season.</td>
+        <td class="urgency-med">MEDIUM–HIGH</td>
+        <td>$800–$1.2K</td>
+      </tr>
+      <tr>
+        <td><strong>Pest Control</strong> <span class="badge badge-hot">HOT</span></td>
+        <td>Recurring revenue model. Owners need steady new leads monthly. Perfect fit for web + SEO upsell.</td>
+        <td>ROI-driven. Will buy if you show them how it generates recurring calls.</td>
+        <td class="urgency-high">HIGH</td>
+        <td>$1K–$1.5K</td>
+      </tr>
+      <tr>
+        <td><strong>Pressure Washing</strong> <span class="badge badge-hot">HOT</span></td>
+        <td>Low barrier entry = many solo operators with zero online presence. Easy demo wins.</td>
+        <td>Price conscious but wow'd by demos. Book fast if the demo looks great.</td>
+        <td class="urgency-high">HIGH</td>
+        <td>$700–$1K</td>
+      </tr>
+      <tr>
+        <td><strong>Pool Service</strong> <span class="badge badge-warm">WARM</span></td>
+        <td>High LTV clients. Summer rush. Pool companies compete locally — website = edge.</td>
+        <td>Repeat buyer mindset. Value long-term solutions.</td>
+        <td class="urgency-med">MEDIUM</td>
+        <td>$1K–$1.5K</td>
+      </tr>
+      <tr>
+        <td><strong>Auto Detailers</strong> <span class="badge badge-warm">WARM</span></td>
+        <td>Growing mobile segment. Instagram-first but no websites. Gallery-style site converts well.</td>
+        <td>Younger owners. Open to digital. Respond well to visual demos.</td>
+        <td class="urgency-med">MEDIUM</td>
+        <td>$700–$1K</td>
+      </tr>
+      <tr>
+        <td><strong>Tree Service</strong> <span class="badge badge-hot">HOT</span></td>
+        <td>High job value ($500–$5K). Storm season = urgency. Very low digital sophistication.</td>
+        <td>Word-of-mouth operators. Genuinely surprised when you show them a demo.</td>
+        <td class="urgency-high">HIGH</td>
+        <td>$1K–$1.5K</td>
+      </tr>
+      <tr>
+        <td><strong>Cleaning Services</strong> <span class="badge badge-warm">WARM</span></td>
+        <td>Residential + commercial. Recurring clients. High LTV. Competitive market = website needed.</td>
+        <td>Mostly women-owned. Trust-focused. Demo + testimonial page wins them.</td>
+        <td class="urgency-med">MEDIUM</td>
+        <td>$700–$1K</td>
+      </tr>
+      <tr>
+        <td><strong>Garage Door Repair</strong> <span class="badge badge-hot">HOT</span></td>
+        <td>Emergency-call niche. Google = everything. Simple sites convert massively.</td>
+        <td>Fast deciders. If the demo looks professional, they close quickly.</td>
+        <td class="urgency-high">VERY HIGH</td>
+        <td>$1K–$1.5K</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SECTION 2: HIRING -->
+<div class="section" id="hiring">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Vetting & Selection</div>
+      <div class="section-title">Full Hiring System</div>
+    </div>
+  </div>
+
+  <h2 class="sub">Why Hire All 16</h2>
+  <p class="body">This is a performance-first model. You're not paying salaries — you're running a 5-day test with a $150 reward as the only guaranteed cost. Every caller who books 2 clients pays for themselves 13x over. The ones who don't perform cost you nothing. Hiring all 16 maximizes your probability of hitting a high number of closers fast.</p>
+
+  <div class="math-box">
+    <div class="math-row"><span class="label">Total Callers</span><span class="value">16</span></div>
+    <div class="math-row"><span class="label">Leads Per Caller</span><span class="value">500</span></div>
+    <div class="math-row"><span class="label">Total Leads</span><span class="value">8,000</span></div>
+    <div class="math-row"><span class="label">Expected Pickup Rate (20%)</span><span class="value">1,600 conversations</span></div>
+    <div class="math-row"><span class="label">Expected Booking Rate (10% of pickups)</span><span class="value">160 demo calls booked</span></div>
+    <div class="math-row"><span class="label">Expected Close Rate (25% of demos)</span><span class="value">40 paying clients</span></div>
+    <div class="math-row"><span class="label">Revenue @ $1,000 setup</span><span class="value">$40,000</span></div>
+    <div class="math-row total"><span class="label">Max Reward Payout (16 × $150)</span><span class="value">$2,400</span></div>
+  </div>
+
+  <h2 class="sub">Interview Script — Fast Screening (10 Minutes Max)</h2>
+  <p class="body">Keep it conversational. You're listening more than talking. Open with warmth, then let them talk.</p>
+
+  <div class="script-block">
+    <div class="script-label">Your Opener</div>
+    <div class="script-line">"Hey [Name], thanks for applying — I saw your voice note and I liked what I heard. This is a quick 10-minute call, just to make sure we're a good fit before I send you your login and leads. Sound good?"</div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">Q1</div>
+      <div>
+        <h4>Background Check</h4>
+        <p>"Walk me through your cold calling experience. What were you selling, who were you calling, and how long did you do it?"<br><br><em style="color:#6b6660">→ Listen for: specific industries, US-based calling experience, appointment-setting language</em></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">Q2</div>
+      <div>
+        <h4>Volume & Output</h4>
+        <p>"On your best week — how many dials were you making per day and what was your booking rate?"<br><br><em style="color:#6b6660">→ Listen for: 80–150+ dials/day = experienced. Below 40 = may be slow.</em></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">Q3</div>
+      <div>
+        <h4>Confidence Test</h4>
+        <p>"Tell me — without using the word 'um' — why a plumber in Dallas needs a website. You've got 30 seconds."<br><br><em style="color:#6b6660">→ Listen for: fluency, no filler words, logical argument, calm delivery</em></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">Q4</div>
+      <div>
+        <h4>Rejection Resilience</h4>
+        <p>"How do you handle it when someone hangs up on you 20 times in a row?"<br><br><em style="color:#6b6660">→ Listen for: humor, resilience, process-focus ("I just move to the next one") vs. emotional reaction</em></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">Q5</div>
+      <div>
+        <h4>Tech & Availability</h4>
+        <p>"What's your internet speed, do you have a headset, and are you available 8am–5pm EST?"</p>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sub">Red Flags — Reject Immediately</h2>
+  <div class="red-flags">
+    <div class="flag">Heavy accent that makes them hard to understand on the phone</div>
+    <div class="flag">Long pauses, excessive "um/uh" in basic answers</div>
+    <div class="flag">Says they've never called US businesses</div>
+    <div class="flag">Unstable internet or no headset — non-negotiable for dialers</div>
+    <div class="flag">Can't answer Q3 confidently — if they can't pitch themselves, they won't pitch yours</div>
+    <div class="flag">Asks about guaranteed salary immediately — low commitment signal</div>
+  </div>
+
+  <h2 class="sub">Green Flags — Fast Track</h2>
+  <div class="green-flags">
+    <div class="gflag">Clear, confident English with zero accent friction</div>
+    <div class="gflag">Has called US service businesses before</div>
+    <div class="gflag">Laughs about rejection — they've been through it</div>
+    <div class="gflag">Asks about the script, the niche, the offer — shows initiative</div>
+    <div class="gflag">Mentions performance bonuses without being asked — competitive mindset</div>
+  </div>
+</div>
+
+<!-- SECTION 3: ONBOARDING -->
+<div class="section" id="onboarding">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Activation</div>
+      <div class="section-title">Onboarding Script</div>
+    </div>
+  </div>
+
+  <p class="body">This is the most important conversation you'll have. How you frame the 5-day window and the $150 reward determines how hard they work. Make them feel like they just got access to something others didn't.</p>
+
+  <div class="script-block">
+    <div class="script-label">Onboarding Call — Word For Word</div>
+    <div class="script-line">
+      "Alright [Name], you're in. Here's how this works — I'm going to send you your JustCall login, your 500 leads, and the script today. Your job is simple: call through your list and book demo appointments for me to close.<br><br>
+      Here's what I want to be upfront about — this first week is a performance test. Not because I don't trust you, but because I've learned the hard way that the only way to know if someone's a great caller is to watch them in action. Talk is cheap — results aren't.<br><br>
+      If you book and convert 2 paying clients within 5 days — I'm sending you $150 cash, no questions asked. That's on top of whatever we agree for ongoing pay. It's my way of saying: you're legit, let's build this together long term.<br><br>
+      Now — the 5-day window is real. We're on a free trial with JustCall and I need us moving fast. Every day counts. I'll be checking the Google Sheet daily, and I'm available on WhatsApp if you hit a snag with the script or dialer.<br><br>
+      You ready to start today?"
+    </div>
+    <div class="script-note">// End with a direct yes/no question — creates commitment</div>
+  </div>
+
+  <div class="highlight">
+    <strong>Psychological mechanics at play:</strong> Scarcity (5-day window), reciprocity ($150 reward framed as a gift), social proof (implied others are competing), identity priming ("you're legit") — all without pressure or false urgency.
+  </div>
+
+  <h2 class="sub">What to Send Each Caller on Day 1</h2>
+  <ul class="styled-list">
+    <li>JustCall login credentials + quick video walkthrough (use Loom)</li>
+    <li>500 leads as a CSV (name, business, phone number, city)</li>
+    <li>The call script as a Google Doc (link, not attachment)</li>
+    <li>Google Sheet tracker link (view-only their own tab)</li>
+    <li>WhatsApp number for real-time support</li>
+    <li>One-page FAQ doc covering: what to say if asked about price, what counts as a "booked demo", how to log calls</li>
+  </ul>
+</div>
+
+<!-- SECTION 4: CALL SCRIPT -->
+<div class="section" id="script">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-title-wrap">
+      <div class="section-label">High-Converting</div>
+      <div class="section-title">The Cold Call Script</div>
+    </div>
+  </div>
+
+  <p class="body">Core angle: <strong style="color:var(--white)">"We already built your website. I just need 10 minutes to show you."</strong> This is a pattern interrupt — they expect a pitch. Instead you open with a gift. Never lead with price. Never close hard. Your only job is to get the demo call booked.</p>
+
+  <div class="script-block">
+    <div class="script-label">Step 1 — Opener (Pattern Interrupt)</div>
+    <div class="script-line">"Hi, is this [Business Name]?"<br><br>
+    [They say yes]<br><br>
+    "Hey, my name is [Name], I'm calling from Codesavan — quick question for you: do you currently have a website for the business?"</div>
+    <div class="script-note">// Don't introduce yourself fully upfront — a question disarms gatekeeping. Keep tone casual, not corporate.</div>
+  </div>
+
+  <div class="script-block">
+    <div class="script-label">Step 2 — The Hook (The Demo Reveal)</div>
+    <div class="script-line">[If NO website]<br>
+    "Perfect — so here's the reason I'm calling. My team actually went ahead and built a free demo website specifically for [niche] businesses in [City]. I built it to show you what your business could look like online — no charge, no obligation, nothing to sign. I just need about 10 minutes to walk you through it and get your thoughts."<br><br>
+    [If they HAVE a website]<br>
+    "Got it — I actually still built one for you because I wanted to show you what a modern, mobile-optimized version could look like versus what most [niche] businesses are running right now. It takes 10 minutes — worth a look?"</div>
+    <div class="script-note">// Key phrase: "I already built it" — this shifts the dynamic from selling to showing. They feel obligated to at least look.</div>
+  </div>
+
+  <div class="script-block">
+    <div class="script-label">Step 3 — Book the Demo (The Ask)</div>
+    <div class="script-line">"I can jump on a quick Zoom with you today around [time] or tomorrow morning — which works better for you?"</div>
+    <div class="script-note">// Always give two options. Never ask "are you free?" — that invites a no. Force a choice between two yeses.</div>
+  </div>
+
+  <h2 class="sub">Objection Handling</h2>
+  <div class="objection-wrap">
+    <div class="obj-card">
+      <div class="obj-q">"Just send me the link."</div>
+      <div class="obj-a">"I totally can — and I will. But honestly, the demo looks 10x better when I walk you through it and explain what we built specific to your business. It takes 10 minutes and I think you'll actually enjoy it. Does today at [time] work, or is tomorrow better?"</div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-q">"I'm really busy right now."</div>
+      <div class="obj-a">"No worries at all — that's exactly why I want to schedule a proper time instead of keeping you now. What's your calendar like tomorrow morning? I'll send you a link and we'll keep it to 10 minutes flat."</div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-q">"Not interested."</div>
+      <div class="obj-a">"I get that — you haven't seen it yet, so I wouldn't expect you to be. All I'm asking is 10 minutes to show you something I already built for free. If you look at it and don't like it, no problem at all. Fair enough?"</div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-q">"How much does it cost?"</div>
+      <div class="obj-a">"That's a great question — and I'll be completely transparent about pricing on the call. But honestly, I don't want to throw out a number before you've even seen what we built. If you look at it and hate it, the price doesn't matter. If you love it, we'll talk numbers — and I think you'll be surprised at how affordable it is. Can we do tomorrow at [time]?"</div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-q">"I already have someone handling my website."</div>
+      <div class="obj-a">"Totally fair — I'm not asking you to fire anyone. I built this as a comparison, just so you can see what's possible. A lot of our clients had someone before us too. Takes 10 minutes — worth knowing your options, right?"</div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-q">"Is this a sales call?"</div>
+      <div class="obj-a">"Honestly? There's an offer at the end — I won't lie to you. But your only job today is to show up and look at a free demo we built. No pressure, no pitch deck, no contracts. If you like it, we talk. If you don't, no hard feelings."</div>
+    </div>
+  </div>
+
+  <div class="script-block">
+    <div class="script-label">Step 4 — Confirm The Booking</div>
+    <div class="script-line">"Perfect. So I have you down for [Day] at [Time] — I'll send a calendar invite to your email right now. What's the best address?"<br><br>
+    [Get email]<br><br>
+    "Got it. You'll get an invite in the next 2 minutes with the Zoom link. Looking forward to showing you what we put together — I think you'll really like it. Have a great rest of your day."</div>
+    <div class="script-note">// Always confirm day + time + email. Send the invite IMMEDIATELY while they're on the line. No invite = no show.</div>
+  </div>
+</div>
+
+<!-- SECTION 5: DAILY PLAN -->
+<div class="section" id="daily">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Execution</div>
+      <div class="section-title">5-Day Daily Plan</div>
+    </div>
+  </div>
+
+  <div class="day-grid">
+    <div class="day-card">
+      <div class="day-num">01</div>
+      <div class="day-title">LAUNCH DAY</div>
+      <div class="day-metric">Dials: <span>60–80</span></div>
+      <div class="day-metric">Conversations: <span>12–16</span></div>
+      <div class="day-metric">Bookings: <span>1–2</span></div>
+      <div class="day-metric">Focus: <span>Script calibration</span></div>
+    </div>
+    <div class="day-card active">
+      <div class="day-num">02</div>
+      <div class="day-title">RAMP UP</div>
+      <div class="day-metric">Dials: <span>90–110</span></div>
+      <div class="day-metric">Conversations: <span>18–22</span></div>
+      <div class="day-metric">Bookings: <span>2–4</span></div>
+      <div class="day-metric">Focus: <span>Objection refinement</span></div>
+    </div>
+    <div class="day-card active">
+      <div class="day-num">03</div>
+      <div class="day-title">PEAK PUSH</div>
+      <div class="day-metric">Dials: <span>100–130</span></div>
+      <div class="day-metric">Conversations: <span>20–26</span></div>
+      <div class="day-metric">Bookings: <span>3–5</span></div>
+      <div class="day-metric">Focus: <span>Max volume</span></div>
+    </div>
+    <div class="day-card">
+      <div class="day-num">04</div>
+      <div class="day-title">CLOSE DAY</div>
+      <div class="day-metric">Dials: <span>100–120</span></div>
+      <div class="day-metric">Conversations: <span>20–24</span></div>
+      <div class="day-metric">Bookings: <span>2–4</span></div>
+      <div class="day-metric">Focus: <span>Demo conversions</span></div>
+    </div>
+    <div class="day-card">
+      <div class="day-num">05</div>
+      <div class="day-title">SPRINT END</div>
+      <div class="day-metric">Dials: <span>80–100</span></div>
+      <div class="day-metric">Conversations: <span>16–20</span></div>
+      <div class="day-metric">Bookings: <span>1–3</span></div>
+      <div class="day-metric">Focus: <span>Follow-ups + close</span></div>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <strong>Best times to call US businesses:</strong> Tuesday–Thursday, 8:00–10:00 AM local time and 4:00–5:30 PM local time. Avoid Mondays (chaotic) and Friday afternoons (mentally checked out). For UK businesses: 9:00–11:30 AM GMT.
+  </div>
+
+  <h2 class="sub">Call Volume Math Per Caller</h2>
+  <div class="math-box">
+    <div class="math-row"><span class="label">Leads assigned</span><span class="value">500</span></div>
+    <div class="math-row"><span class="label">Daily dials (avg)</span><span class="value">100</span></div>
+    <div class="math-row"><span class="label">Days to exhaust list</span><span class="value">5 days exactly</span></div>
+    <div class="math-row"><span class="label">Expected pickup rate</span><span class="value">20% = 100 conversations</span></div>
+    <div class="math-row"><span class="label">Booking rate (10%)</span><span class="value">10 demos booked</span></div>
+    <div class="math-row"><span class="label">Close rate (25%)</span><span class="value">2–3 paying clients</span></div>
+    <div class="math-row total"><span class="label">Revenue per caller</span><span class="value">$2,000–$3,000</span></div>
+  </div>
+</div>
+
+<!-- SECTION 6: TRACKING -->
+<div class="section" id="tracking">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Operations</div>
+      <div class="section-title">Google Sheets Tracker</div>
+    </div>
+  </div>
+
+  <p class="body">Create one master Google Sheet with a tab per caller named after them. You review daily. They update in real time. Keep it dead simple — if it takes more than 5 seconds to log a call, they won't do it.</p>
+
+  <h2 class="sub">Tab Structure — Per Caller</h2>
+  <table class="sheet-table">
+    <thead>
+      <tr>
+        <th>Column A</th><th>Column B</th><th>Column C</th><th>Column D</th><th>Column E</th><th>Column F</th><th>Column G</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Date</td><td>Business Name</td><td>Phone</td><td>Outcome</td><td>Demo Booked?</td><td>Demo Date/Time</td><td>Notes</td>
+      </tr>
+      <tr>
+        <td>3/28/26</td><td>ABC Roofing</td><td>+1 214...</td><td>No Answer</td><td>—</td><td>—</td><td>Try again Day 3</td>
+      </tr>
+      <tr>
+        <td>3/28/26</td><td>Dallas HVAC Pro</td><td>+1 972...</td><td>Interested</td><td>YES ✓</td><td>3/29 10am EST</td><td>Wants to see demo</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub">Outcome Codes (Keep It Simple)</h2>
+  <ul class="styled-list">
+    <li><strong style="color:var(--white)">NA</strong> — No Answer</li>
+    <li><strong style="color:var(--white)">VM</strong> — Voicemail left</li>
+    <li><strong style="color:var(--white)">CB</strong> — Call back requested</li>
+    <li><strong style="color:var(--white)">NI</strong> — Not interested</li>
+    <li><strong style="color:var(--white)">BOOKED</strong> — Demo scheduled ✓</li>
+    <li><strong style="color:var(--white)">CLOSED</strong> — Client paid ✓✓</li>
+    <li><strong style="color:var(--white)">DNC</strong> — Do not call</li>
+  </ul>
+
+  <h2 class="sub">Master Dashboard Tab — Your Daily View</h2>
+  <table class="sheet-table">
+    <thead>
+      <tr><th>Caller</th><th>Total Dials</th><th>Conversations</th><th>Demos Booked</th><th>Clients Closed</th><th>Revenue</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Maria S.</td><td>94</td><td>21</td><td>3</td><td>1</td><td>$1,000</td><td>🟢 On Track</td></tr>
+      <tr><td>John R.</td><td>61</td><td>8</td><td>0</td><td>0</td><td>$0</td><td>🔴 Lagging</td></tr>
+      <tr><td>Ana T.</td><td>112</td><td>24</td><td>5</td><td>2</td><td>$2,000</td><td>🏆 Top Performer</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SECTION 7: PERFORMANCE -->
+<div class="section" id="performance">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Psychology & Tactics</div>
+      <div class="section-title">Performance Strategy</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>The Daily Leaderboard</h3>
+      <p>Post a screenshot of the Google Sheet leaderboard every morning in the WhatsApp group. Top performer gets a shoutout. Bottom performers see where they stand. Competition drives volume.</p>
+      <span class="tag">MOTIVATION</span>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎯</div>
+      <h3>Micro-Goal Framing</h3>
+      <p>Tell callers: "Your only job today is 5 conversations that end with a demo booked." Don't say "call 100 people." Micro-goals feel achievable and build momentum.</p>
+      <span class="tag">PSYCHOLOGY</span>
+    </div>
+    <div class="card">
+      <div class="card-icon">📞</div>
+      <h3>Same-Day Follow-Up Rule</h3>
+      <p>Any lead that says "call me back" or "I'm interested" goes into a priority callback list. Call them back within 2 hours — same-day follow-up 3x increases show rate.</p>
+      <span class="tag">CONVERSION</span>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔁</div>
+      <h3>No-Answer Recycling</h3>
+      <p>No-answers get called again on Day 3 at a different time. A lead that didn't pick up at 9am may pick up at 4pm. Most callers skip this — it's free extra inventory.</p>
+      <span class="tag">VOLUME</span>
+    </div>
+    <div class="card">
+      <div class="card-icon">💬</div>
+      <h3>WhatsApp Roleplay</h3>
+      <p>On Day 1, do a 5-minute roleplay in the WhatsApp group. Play the prospect. Have them handle your objections live. Callers who rehearse perform 40% better in real calls.</p>
+      <span class="tag">TRAINING</span>
+    </div>
+    <div class="card">
+      <div class="card-icon">⏰</div>
+      <h3>Power Hour</h3>
+      <p>Set a daily "Power Hour" — 9am–10am EST, everyone calls simultaneously. Create a group WhatsApp check-in at 10am: "How many calls? Any bookings?" Energy is contagious.</p>
+      <span class="tag">CULTURE</span>
+    </div>
+  </div>
+
+  <h2 class="sub">If a Caller is Lagging (0 bookings by Day 2)</h2>
+  <ul class="styled-list">
+    <li>Pull a recording from JustCall and listen together — identify the specific breakdown point</li>
+    <li>Do a live roleplay with them on WhatsApp voice note</li>
+    <li>Check if they're actually making the calls or just logging them — JustCall timestamps don't lie</li>
+    <li>If Day 3 = still zero activity, remove their leads and redistribute to top performers</li>
+  </ul>
+</div>
+
+<!-- SECTION 8: SCALING -->
+<div class="section" id="scaling">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-title-wrap">
+      <div class="section-label">Bonus</div>
+      <div class="section-title">After the 5-Day Sprint</div>
+    </div>
+  </div>
+
+  <p class="body">The sprint is the filter. After 5 days, you'll know exactly who your top 3–5 performers are. Those are your people. Everyone else is noise. Here's what happens next.</p>
+
+  <div class="timeline">
+    <div class="tl-item done">
+      <div class="tl-dot"></div>
+      <div class="tl-phase">Days 1–5</div>
+      <div class="tl-title">The Sprint</div>
+      <div class="tl-desc">16 callers. 8,000 leads. First revenue generated. Top performers identified.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-phase">Week 2</div>
+      <div class="tl-title">Retain & Pay</div>
+      <div class="tl-desc">Keep top 3–5. Move to $5–8/hr base + $15/demo. Upgrade to JustCall paid plan. Give fresh leads.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-phase">Month 2</div>
+      <div class="tl-title">Systems Build</div>
+      <div class="tl-desc">Add CRM (HubSpot free). Build follow-up sequences. Add email outreach alongside calls.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-phase">Month 3</div>
+      <div class="tl-title">Outbound Machine</div>
+      <div class="tl-desc">5 full-time callers. 2,000 dials/day. Predictable 10–15 new clients/month. $10K–$15K MRR.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-phase">Month 6</div>
+      <div class="tl-title">Agency Scale</div>
+      <div class="tl-desc">Add upsells: SEO, Google Ads management. $300–$500/mo retainers. $30K+ MRR becomes realistic.</div>
+    </div>
+  </div>
+
+  <h2 class="sub">Who to Retain — Selection Criteria</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>Booked 3+ Demos</h3>
+      <p>They have the script down and don't need babysitting. High output, proven consistency.</p>
+      <span class="tag">KEEP — PRIORITY</span>
+    </div>
+    <div class="card">
+      <h3>Made 90+ Dials/Day</h3>
+      <p>Volume is trainable. If they're dialing hard but not converting yet, they're worth coaching.</p>
+      <span class="tag">KEEP — TRAIN</span>
+    </div>
+    <div class="card">
+      <h3>Proactive on WhatsApp</h3>
+      <p>Asked questions, shared feedback, flagged issues. These people will make your system better.</p>
+      <span class="tag">KEEP — POTENTIAL</span>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <strong>Long-term play:</strong> Your best caller eventually becomes your <strong>Team Lead</strong> — they train new hires, monitor quality, and own the daily leaderboard. You step out of operations entirely and focus on closing demos and building the product.
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="brand">CODESAVAN</div>
+  <p>5-Day Sprint Playbook · Confidential · Built for fast execution</p>
+  <p style="margin-top:8px; font-size:11px;">16 callers · 8,000 leads · 5 days · $40K potential</p>
+</footer>
+
+</body>
+</html>
