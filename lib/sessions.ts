@@ -190,18 +190,31 @@ export async function saveSessionToDB(session: SessionData): Promise<boolean> {
     const sessionData = {
       username: session.username,
       date: session.startTime.split('T')[0], // YYYY-MM-DD format
+      start_time: session.startTime,
+      end_time: session.endTime || null,
+      total_paused_time_ms: session.totalPausedTimeMs,
+      status: session.status,
       calls_made: session.totalCalls,
       answered: session.answered,
       voicemails: session.voicemails,
       no_answers: session.noAnswers,
       not_interested: session.notInterested,
       callbacks: session.callbacks,
+      gatekeepers: session.gatekeepers,
+      calls: JSON.stringify(session.calls), // Store full call details as JSON
     };
 
-    await pb.collection("sessions").create(sessionData);
+    console.log("Saving session to DB:", sessionData);
+    const result = await pb.collection("sessions").create(sessionData);
+    console.log("Session saved successfully:", result.id);
     return true;
-  } catch (err) {
-    console.error("Failed to save session to database:", err);
+  } catch (err: any) {
+    console.error("Failed to save session to database:");
+    console.error("Error:", err);
+    if (err.response) {
+      console.error("Response data:", err.response.data);
+      console.error("Response status:", err.response.status);
+    }
     return false;
   }
 }
@@ -214,22 +227,34 @@ export async function loadSessionsFromDB(username: string): Promise<SessionData[
     });
 
     // Map PocketBase records to SessionData format
-    return result.map((record: any) => ({
-      id: `db_${record.id}`,
-      username: record.username,
-      startTime: record.date + "T00:00:00.000Z", // Convert date to ISO string
-      endTime: undefined,
-      totalPausedTimeMs: 0,
-      status: 'completed' as const,
-      calls: [],
-      totalCalls: record.calls_made || 0,
-      answered: record.answered || 0,
-      voicemails: record.voicemails || 0,
-      noAnswers: record.no_answers || 0,
-      notInterested: record.not_interested || 0,
-      callbacks: record.callbacks || 0,
-      gatekeepers: 0,
-    }));
+    return result.map((record: any) => {
+      // Parse calls JSON if present
+      let calls: SessionCall[] = [];
+      if (record.calls) {
+        try {
+          calls = JSON.parse(record.calls);
+        } catch {
+          calls = [];
+        }
+      }
+
+      return {
+        id: `db_${record.id}`,
+        username: record.username,
+        startTime: record.start_time || record.date + "T00:00:00.000Z",
+        endTime: record.end_time || undefined,
+        totalPausedTimeMs: record.total_paused_time_ms || 0,
+        status: (record.status || 'completed') as 'active' | 'paused' | 'completed',
+        calls: calls,
+        totalCalls: record.calls_made || 0,
+        answered: record.answered || 0,
+        voicemails: record.voicemails || 0,
+        noAnswers: record.no_answers || 0,
+        notInterested: record.not_interested || 0,
+        callbacks: record.callbacks || 0,
+        gatekeepers: record.gatekeepers || 0,
+      };
+    });
   } catch (err) {
     console.error("Failed to load sessions from database:", err);
     return [];

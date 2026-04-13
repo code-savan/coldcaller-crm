@@ -31,6 +31,7 @@ import {
   formatDate,
   formatTime,
   endSession,
+  loadSessionsFromDB,
 } from "@/lib/sessions";
 
 export default function SessionsPage() {
@@ -50,24 +51,46 @@ export default function SessionsPage() {
     loadSessions();
   }, [router]);
 
-  const loadSessions = () => {
-    const allSessions = getAllSessions();
+  const loadSessions = async () => {
+    // Get localStorage sessions
+    const localSessions = getAllSessions();
     const current = getCurrentSession();
-    setSessions(allSessions);
+
+    // Load from DB if we have a username
+    const stored = localStorage.getItem("username");
+    let dbSessions: SessionData[] = [];
+    if (stored) {
+      try {
+        dbSessions = await loadSessionsFromDB(stored);
+      } catch (err) {
+        console.error("Failed to load DB sessions:", err);
+      }
+    }
+
+    // Merge: DB sessions (newer) + local sessions (not in DB)
+    const dbIds = new Set(dbSessions.map(s => s.id.replace('db_', '')));
+    const localOnly = localSessions.filter(s => !s.id.startsWith('db_') && !dbIds.has(s.id));
+
+    // Combine and sort by start time (newest first)
+    const merged = [...dbSessions, ...localOnly].sort((a, b) =>
+      new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
+
+    setSessions(merged);
     setCurrentSession(current);
     setLoading(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this session?")) return;
     deleteSession(id);
-    loadSessions();
+    await loadSessions();
   };
 
   const handleEndSession = async () => {
     if (!confirm("End the current session? This will save all call data.")) return;
     await endSession();
-    loadSessions();
+    await loadSessions();
   };
 
   const getStatusBadge = (status: string) => {

@@ -33,12 +33,18 @@ export interface Session {
   id: string
   username: string
   date: string
+  start_time: string
+  end_time: string | null
+  total_paused_time_ms: number
+  status: 'active' | 'paused' | 'completed'
   calls_made: number
   answered: number
   voicemails: number
   no_answers: number
   not_interested: number
   callbacks: number
+  gatekeepers: number
+  calls: any // JSON field
   created: string
   updated: string
 }

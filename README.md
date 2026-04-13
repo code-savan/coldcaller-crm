@@ -127,14 +127,20 @@ GOOGLE_PLACES_API_KEY=your_google_places_api_key
 - imported_at (autodate)
 
 **Collection: sessions**
-- username (text)
-- date (text)
-- calls_made (number)
-- answered (number)
-- voicemails (number)
-- no_answers (number)
-- not_interested (number)
-- callbacks (number)
+- username (text, required)
+- date (text) - YYYY-MM-DD format for easy filtering
+- start_time (text) - ISO timestamp when session started
+- end_time (text, optional) - ISO timestamp when session ended
+- total_paused_time_ms (number, default: 0) - Total time paused in milliseconds
+- status (text, default: "completed") - "active" | "paused" | "completed"
+- calls_made (number, default: 0) - Total number of calls made
+- answered (number, default: 0) - Count of answered calls
+- voicemails (number, default: 0) - Count of voicemails left
+- no_answers (number, default: 0) - Count of no answers
+- not_interested (number, default: 0) - Count of not interested responses
+- callbacks (number, default: 0) - Count of scheduled callbacks
+- gatekeepers (number, default: 0) - Count of gatekeeper encounters
+- calls (json, optional) - Full array of call details stored as JSON
 
 ### 4. Run Development Server
 
