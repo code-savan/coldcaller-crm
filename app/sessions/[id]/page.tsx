@@ -38,6 +38,7 @@ import {
   formatTime,
   getActiveDuration,
   endSession,
+  getSessionFromDB,
 } from "@/lib/sessions";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
@@ -67,30 +68,61 @@ export default function SessionDetailPage() {
     loadSession();
   }, [router, sessionId]);
 
-  const loadSession = () => {
+  const loadSession = async () => {
     // Check if this is the current active session
     const current = getCurrentSession();
     if (current && current.id === sessionId) {
       setSession(current);
       setIsCurrent(true);
-    } else {
-      const pastSession = getSessionById(sessionId);
+      setLoading(false);
+      return;
+    }
+
+    // Check localStorage for past sessions
+    const pastSession = getSessionById(sessionId);
+    if (pastSession) {
       setSession(pastSession);
       setIsCurrent(false);
+      setLoading(false);
+      return;
     }
+
+    // If not found locally, try loading from DB (for db_xxxx IDs)
+    if (sessionId.startsWith('db_')) {
+      try {
+        const dbSession = await getSessionFromDB(sessionId);
+        if (dbSession) {
+          setSession(dbSession);
+          setIsCurrent(false);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to load DB session:", err);
+      }
+    }
+
+    // Session not found
+    setSession(null);
     setLoading(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this session?")) return;
-    deleteSession(sessionId);
+    if (sessionId.startsWith('db_')) {
+      // For DB sessions, we can only remove from local state
+      // The DB record remains (could add pb.collection("sessions").delete() here)
+      console.log("DB session - cannot delete from localStorage");
+    } else {
+      deleteSession(sessionId);
+    }
     router.push("/sessions");
   };
 
   const handleEndSession = async () => {
     if (!confirm("End the current session? This will save all call data.")) return;
     await endSession();
-    loadSession();
+    await loadSession();
   };
 
   if (loading) {

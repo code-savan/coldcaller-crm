@@ -227,37 +227,53 @@ export async function loadSessionsFromDB(username: string): Promise<SessionData[
     });
 
     // Map PocketBase records to SessionData format
-    return result.map((record: any) => {
-      // Parse calls JSON if present
-      let calls: SessionCall[] = [];
-      if (record.calls) {
-        try {
-          calls = JSON.parse(record.calls);
-        } catch {
-          calls = [];
-        }
-      }
-
-      return {
-        id: `db_${record.id}`,
-        username: record.username,
-        startTime: record.start_time || record.date + "T00:00:00.000Z",
-        endTime: record.end_time || undefined,
-        totalPausedTimeMs: record.total_paused_time_ms || 0,
-        status: (record.status || 'completed') as 'active' | 'paused' | 'completed',
-        calls: calls,
-        totalCalls: record.calls_made || 0,
-        answered: record.answered || 0,
-        voicemails: record.voicemails || 0,
-        noAnswers: record.no_answers || 0,
-        notInterested: record.not_interested || 0,
-        callbacks: record.callbacks || 0,
-        gatekeepers: record.gatekeepers || 0,
-      };
-    });
+    return result.map((record: any) => mapDBRecordToSessionData(record));
   } catch (err) {
     console.error("Failed to load sessions from database:", err);
     return [];
+  }
+}
+
+// Helper to map DB record to SessionData
+function mapDBRecordToSessionData(record: any): SessionData {
+  // Parse calls JSON if present
+  let calls: SessionCall[] = [];
+  if (record.calls) {
+    try {
+      calls = JSON.parse(record.calls);
+    } catch {
+      calls = [];
+    }
+  }
+
+  return {
+    id: `db_${record.id}`,
+    username: record.username,
+    startTime: record.start_time || record.date + "T00:00:00.000Z",
+    endTime: record.end_time || undefined,
+    totalPausedTimeMs: record.total_paused_time_ms || 0,
+    status: (record.status || 'completed') as 'active' | 'paused' | 'completed',
+    calls: calls,
+    totalCalls: record.calls_made || 0,
+    answered: record.answered || 0,
+    voicemails: record.voicemails || 0,
+    noAnswers: record.no_answers || 0,
+    notInterested: record.not_interested || 0,
+    callbacks: record.callbacks || 0,
+    gatekeepers: record.gatekeepers || 0,
+  };
+}
+
+// Fetch single session from DB by ID (without db_ prefix)
+export async function getSessionFromDB(sessionId: string): Promise<SessionData | null> {
+  try {
+    // Remove db_ prefix if present
+    const dbId = sessionId.startsWith('db_') ? sessionId.slice(3) : sessionId;
+    const record = await pb.collection("sessions").getOne(dbId);
+    return mapDBRecordToSessionData(record);
+  } catch (err) {
+    console.error("Failed to load session from database:", err);
+    return null;
   }
 }
 
