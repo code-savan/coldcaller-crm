@@ -102,14 +102,40 @@ export function ActiveCallScreen({ onLeadUpdate, currentSession }: ActiveCallScr
       }, 500);
     };
 
-    activeCall.on("disconnect", handleDisconnect);
-    activeCall.on("accept", handleAccept);
+    activeCall.on("disconnect", (call: any) => {
+      console.log("Call disconnected:", {
+        direction: call.direction,
+        status: call.status,
+        from: call.parameters?.From,
+        to: call.parameters?.To,
+        sid: call.parameters?.CallSid,
+      });
+      handleDisconnect();
+    });
+    activeCall.on("accept", (call: any) => {
+      console.log("Call accepted:", {
+        direction: call.direction,
+        status: call.status,
+        to: call.parameters?.To,
+      });
+      handleAccept();
+    });
     activeCall.on("cancel", handleCancel);
     activeCall.on("reject", handleCancel);
     activeCall.on("error", (error: any) => {
-      console.error("Call error:", error);
-      toast.error("Call error occurred");
+      console.error("Call error:", {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+      });
+      toast.error(`Call error: ${error.message || 'Unknown error'}`);
       clearCall();
+    });
+    activeCall.on("ringing", (hasEarlyMedia: boolean) => {
+      console.log("Call ringing, early media:", hasEarlyMedia);
+    });
+    activeCall.on("muted", (isMuted: boolean) => {
+      console.log("Call muted:", isMuted);
     });
 
     return () => {
@@ -262,12 +288,12 @@ export function ActiveCallScreen({ onLeadUpdate, currentSession }: ActiveCallScr
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                 {activeLead.business_name}
               </h2>
-              
+
               {/* Contact Name */}
               {activeLead.contact_name && (
                 <p className="text-lg text-zinc-400 mb-1">{activeLead.contact_name}</p>
               )}
-              
+
               {/* Phone Number */}
               <p className="text-zinc-500 font-mono">{activeLead.phone}</p>
 

@@ -22,14 +22,14 @@ export async function POST(request: NextRequest) {
     } else {
       // Outbound call - dial the number
       const callerId = process.env.TWILIO_PHONE_NUMBER;
-      
+
       if (!callerId) {
         console.error("Missing TWILIO_PHONE_NUMBER environment variable");
         voiceResponse.say("Sorry, the call cannot be completed. Goodbye.");
       } else if (!to) {
         voiceResponse.say("Sorry, no destination number provided. Goodbye.");
       } else {
-        voiceResponse.dial({ callerId, timeout: 30 }).number(to);
+        voiceResponse.dial({ callerId, timeout: 30, answerOnBridge: true }).number(to);
       }
     }
 
@@ -41,11 +41,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error handling voice webhook:", error);
-    
+
     // Return error TwiML
     const voiceResponse = new twiml.VoiceResponse();
     voiceResponse.say("Sorry, an error occurred. Please try again later.");
-    
+
     return new NextResponse(voiceResponse.toString(), {
       headers: {
         "Content-Type": "text/xml",

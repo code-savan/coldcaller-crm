@@ -201,27 +201,34 @@ export default function OperationsPage() {
     }
   }, [currentLead?.id, leads, currentSession]);
 
-  const handleStartSession = async () => {
-    // Create new session if none exists
-    let session = currentSession;
-    if (!session) {
-      const stored = localStorage.getItem("username");
-      if (stored) {
-        session = await createSession(stored);
-        setCurrentSession(session);
-      }
-    } else if (session.status === 'paused') {
-      // Resume paused session
-      const resumed = resumeSession();
-      if (resumed) {
-        setCurrentSession(resumed);
-      }
-    }
+  const [startingSession, setStartingSession] = useState(false);
 
-    setSessionActive(true);
-    if (filteredLeads.length > 0) {
-      setCurrentLead(filteredLeads[0]);
-      setCurrentIndex(0);
+  const handleStartSession = async () => {
+    setStartingSession(true);
+    try {
+      // Create new session if none exists
+      let session = currentSession;
+      if (!session) {
+        const stored = localStorage.getItem("username");
+        if (stored) {
+          session = await createSession(stored);
+          setCurrentSession(session);
+        }
+      } else if (session.status === 'paused') {
+        // Resume paused session
+        const resumed = resumeSession();
+        if (resumed) {
+          setCurrentSession(resumed);
+        }
+      }
+
+      setSessionActive(true);
+      if (filteredLeads.length > 0) {
+        setCurrentLead(filteredLeads[0]);
+        setCurrentIndex(0);
+      }
+    } finally {
+      setStartingSession(false);
     }
   };
 
@@ -368,11 +375,15 @@ export default function OperationsPage() {
           {!sessionActive ? (
             <Button
               onClick={handleStartSession}
-              disabled={filteredLeads.length === 0}
+              disabled={filteredLeads.length === 0 || startingSession}
               className="h-9 px-4 bg-white text-black hover:bg-zinc-200 font-medium text-sm rounded-lg transition-all duration-200 disabled:opacity-40"
             >
-              <Play className="h-3.5 w-3.5 mr-2 fill-current" />
-              {currentSession ? "Resume" : "Start Session"}
+              {startingSession ? (
+                <div className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin mr-2" />
+              ) : (
+                <Play className="h-3.5 w-3.5 mr-2 fill-current" />
+              )}
+              {startingSession ? "Starting..." : currentSession ? "Resume" : "Start Session"}
             </Button>
           ) : (
             <Button

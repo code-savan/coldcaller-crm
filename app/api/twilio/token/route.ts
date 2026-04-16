@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import twilio from "twilio";
 
+// Force dynamic rendering to avoid static generation errors
+export const dynamic = 'force-dynamic';
+
 const { AccessToken } = twilio.jwt;
 const { VoiceGrant } = AccessToken;
 

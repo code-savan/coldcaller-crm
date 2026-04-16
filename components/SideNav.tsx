@@ -17,6 +17,7 @@ import {
   Users,
   BarChart3,
   AlertTriangle,
+  PhoneCall,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Leads", href: "/leads", icon: List },
   { name: "Operations", href: "/operations", icon: Phone },
+  { name: "Dialer", href: "/dialer", icon: PhoneCall },
   { name: "Sessions", href: "/sessions", icon: History },
   { name: "Discover", href: "/discover", icon: Search, showStatus: true },
   { name: "Upload", href: "/upload", icon: Upload },
