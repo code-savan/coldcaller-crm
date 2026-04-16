@@ -36,7 +36,7 @@ export function generateSessionId(): string {
   return `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-export function createSession(username: string): SessionData {
+export async function createSession(username: string): Promise<SessionData> {
   const session: SessionData = {
     id: generateSessionId(),
     username,
@@ -54,6 +54,10 @@ export function createSession(username: string): SessionData {
   };
 
   localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(session));
+
+  // Update user's session status in PocketBase
+  await updateUserSessionStatus(username, true);
+
   return session;
 }
 
@@ -121,6 +125,9 @@ export async function endSession(): Promise<SessionData | null> {
   } else {
     console.warn("Failed to save session to database");
   }
+
+  // Update user's session status in PocketBase
+  await updateUserSessionStatus(session.username, false);
 
   // Clear current session
   localStorage.removeItem(CURRENT_SESSION_KEY);
@@ -333,4 +340,56 @@ export function formatTime(isoString: string): string {
     minute: '2-digit',
     hour12: true,
   });
+}
+
+// User session status tracking for admin view
+export async function updateUserSessionStatus(username: string, sessionActive: boolean): Promise<boolean> {
+  try {
+    // Find user by username
+    const users = await pb.collection("users").getList(1, 1, {
+      filter: `username = "${username}"`,
+    });
+
+    if (users.items.length === 0) {
+      console.warn("User not found for session status update:", username);
+      return false;
+    }
+
+    const userId = users.items[0].id;
+
+    await pb.collection("users").update(userId, {
+      session_active: sessionActive,
+      last_active: new Date().toISOString(),
+    });
+
+    return true;
+  } catch (err) {
+    console.error("Failed to update user session status:", err);
+    return false;
+  }
+}
+
+export async function updateUserLastActive(username: string): Promise<boolean> {
+  try {
+    // Find user by username
+    const users = await pb.collection("users").getList(1, 1, {
+      filter: `username = "${username}"`,
+    });
+
+    if (users.items.length === 0) {
+      console.warn("User not found for last active update:", username);
+      return false;
+    }
+
+    const userId = users.items[0].id;
+
+    await pb.collection("users").update(userId, {
+      last_active: new Date().toISOString(),
+    });
+
+    return true;
+  } catch (err) {
+    console.error("Failed to update user last active:", err);
+    return false;
+  }
 }

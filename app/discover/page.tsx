@@ -28,7 +28,12 @@ import {
   ArrowRight,
   Zap,
   CheckCircle2,
-  Trash2
+  Trash2,
+  Megaphone,
+  Building2,
+  AlertTriangle,
+  Clock,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -102,6 +107,32 @@ const NICHES = [
   "Garage Door",
 ];
 
+const DISCOVERY_SOURCES = [
+  {
+    id: 'google_places',
+    label: 'Google Places',
+    icon: MapPin,
+    description: 'Search Google Maps for local businesses',
+    color: 'violet'
+  },
+  {
+    id: 'meta_ads',
+    label: 'Meta Ads Library',
+    icon: Megaphone,
+    description: 'Find businesses running Facebook/Instagram ads',
+    color: 'blue'
+  },
+] as const;
+
+const AD_RECENCY_OPTIONS = [
+  { value: 7, label: 'Last 7 days - Fresh leads' },
+  { value: 14, label: 'Last 14 days - Recent ads' },
+  { value: 30, label: 'Last 30 days - Active advertisers' },
+  { value: 60, label: 'Last 60 days - Still running' },
+  { value: 90, label: 'Last 90 days - Extended reach' },
+  { value: 180, label: 'Last 6 months - All advertisers' },
+];
+
 interface DiscoveredLead {
   business_name: string;
   phone: string;
@@ -119,6 +150,23 @@ interface DiscoveredLead {
   verified: boolean;
   selected?: boolean;
   duplicate?: boolean;
+  // Contact info
+  contact_name?: string;
+  notes?: string;
+  verification_data?: any;
+  // Source tracking
+  source?: 'google_places' | 'meta_ads' | 'facebook_group' | 'linkedin' | 'manual';
+  source_url?: string;
+  source_id?: string;
+  // Meta Ads specific
+  discovery_context?: string;
+  ad_start_date?: string;
+  ad_spend_indicator?: 'low' | 'medium' | 'high';
+  // AI scoring
+  ai_recommended?: boolean;
+  ai_reason?: string;
+  ai_flags?: string[];
+  review_status?: 'approved' | 'flagged' | 'rejected';
 }
 
 export default function DiscoverPage() {
@@ -128,12 +176,14 @@ export default function DiscoverPage() {
   const [importing, setImporting] = useState(false);
 
   // Discovery form state
+  const [source, setSource] = useState<'google_places' | 'meta_ads'>('google_places');
   const [niche, setNiche] = useState("Roofing");
   const [city, setCity] = useState("");
   const [state, setState] = useState("TX");
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [targetCount, setTargetCount] = useState(50);
+  const [adRecencyDays, setAdRecencyDays] = useState(14);
 
   // Results state
   const [leads, setLeads] = useState<DiscoveredLead[]>([]);
@@ -186,21 +236,31 @@ export default function DiscoverPage() {
     }
   };
 
-  // Progress message rotation
-  const progressMessages = [
-    { icon: Search, text: "Searching Google Maps..." },
-    { icon: Database, text: "Scanning business directories..." },
-    { icon: Phone, text: "Extracting contact information..." },
-    { icon: Star, text: "Analyzing review scores..." },
-    { icon: Globe, text: "Checking website presence..." },
-    { icon: Filter, text: "Filtering duplicates..." },
-    { icon: Sparkles, text: "Prioritizing high-value leads..." },
-    { icon: Check, text: "Finalizing results..." },
+  // Progress steps with estimated time for each
+  const progressSteps = source === 'meta_ads' ? [
+    { icon: Search, text: "Launching browser & loading Meta Ads Library...", duration: 5 },
+    { icon: Database, text: "Searching for active advertisers...", duration: 10 },
+    { icon: Filter, text: "Filtering by ad recency & business type...", duration: 8 },
+    { icon: Phone, text: "Extracting phone numbers from pages...", duration: 15 },
+    { icon: Sparkles, text: "AI scoring & generating warm openers...", duration: 5 },
+    { icon: Check, text: "Finalizing lead list...", duration: 2 },
+  ] : [
+    { icon: Search, text: "Searching Google Maps...", duration: 3 },
+    { icon: Database, text: "Scanning business directories...", duration: 5 },
+    { icon: Phone, text: "Extracting contact information...", duration: 8 },
+    { icon: Sparkles, text: "Prioritizing high-value leads...", duration: 4 },
+    { icon: Check, text: "Finalizing results...", duration: 2 },
   ];
 
+  const totalDuration = progressSteps.reduce((acc, step) => acc + step.duration, 0);
+
   const handleDiscover = async () => {
-    if (!state) {
+    if (source === 'google_places' && !state) {
       toast.error("Please select a state");
+      return;
+    }
+    if (!niche) {
+      toast.error("Please enter a niche");
       return;
     }
 
@@ -208,24 +268,63 @@ export default function DiscoverPage() {
     setLeads([]);
     setSelectedLeads(new Set());
     setProgressPercent(0);
-    setProgressMessage("Discovering leads... (this may take a minute)");
 
     // Create new abort controller for this request
     const controller = new AbortController();
     setAbortController(controller);
 
+    // Start progress animation
+    let currentStep = 0;
+    let accumulatedTime = 0;
+    let progressInterval: ReturnType<typeof setInterval> | null = null;
+
+    progressInterval = setInterval(() => {
+      accumulatedTime += 0.5;
+      const currentStepInfo = progressSteps[currentStep];
+      if (!currentStepInfo) {
+        if (progressInterval) clearInterval(progressInterval);
+        return;
+      }
+      const stepProgress = Math.min(accumulatedTime / currentStepInfo.duration, 1);
+
+      // Calculate overall progress
+      const completedStepsProgress = currentStep * (100 / progressSteps.length);
+      const currentStepContribution = stepProgress * (100 / progressSteps.length);
+      const totalProgress = Math.min(completedStepsProgress + currentStepContribution, 99);
+
+      setProgressPercent(totalProgress);
+      setProgressMessage(currentStepInfo.text);
+
+      // Move to next step when current is done
+      if (stepProgress >= 1) {
+        accumulatedTime = 0;
+        currentStep++;
+        if (currentStep >= progressSteps.length) {
+          if (progressInterval) clearInterval(progressInterval);
+        }
+      }
+    }, 500);
+
     try {
-      const res = await fetch("/api/discover", {
+      const endpoint = source === 'meta_ads' ? '/api/discover/meta' : '/api/discover';
+      const body = source === 'meta_ads' ? {
+        username,
+        niche,
+        target_count: targetCount,
+        ad_recency_days: adRecencyDays,
+      } : {
+        username,
+        niche,
+        city,
+        state,
+        target_count: targetCount,
+      };
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
-        body: JSON.stringify({
-          username,
-          niche,
-          city,
-          state,
-          target_count: targetCount,
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -235,7 +334,9 @@ export default function DiscoverPage() {
       }
 
       setLeads(data.leads || []);
-      setProgressMessage(`Found ${data.leads?.length || 0} leads`);
+      setApiCalls(data.api_calls || 0);
+      setProgressPercent(100);
+      setProgressMessage(`Found ${data.leads?.length || 0} leads with phone numbers`);
       toast.success(`Discovery complete! Found ${data.leads?.length || 0} leads`);
     } catch (err: any) {
       if (err.name === 'AbortError') {
@@ -245,6 +346,10 @@ export default function DiscoverPage() {
         toast.error("Discovery failed: " + err.message);
       }
     } finally {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
       setLoading(false);
       setAbortController(null);
     }
@@ -258,6 +363,13 @@ export default function DiscoverPage() {
     setLoading(false);
     setProgressMessage("");
     setProgressPercent(0);
+  };
+
+  // Estimated time remaining
+  const getEstimatedTime = () => {
+    const remaining = Math.max(totalDuration - (progressPercent / 100) * totalDuration, 0);
+    if (remaining < 60) return `${Math.ceil(remaining)}s`;
+    return `${Math.ceil(remaining / 60)}m ${Math.ceil(remaining % 60)}s`;
   };
 
   const toggleLeadSelection = (index: number) => {
@@ -328,26 +440,39 @@ export default function DiscoverPage() {
       await Promise.all(
         batch.map(async (lead) => {
           try {
-            await pb.collection("leads").create({
+            const leadData: any = {
               username,
               business_name: lead.business_name,
-              contact_name: "",
-              phone: lead.phone,
+              contact_name: lead.contact_name || "",
+              phone: lead.phone || "",
               city: lead.city,
               state: lead.state,
               niche: lead.niche,
-              website: lead.website,
-              notes: `Address: ${lead.address}`,
+              website: lead.website || "",
+              notes: lead.notes || `Address: ${lead.address || ''}`,
               status: "not_called",
               call_count: 0,
-              verified: lead.verified,
-              verification_score: lead.verification_score,
-              verification_data: {
+              verified: lead.verified || false,
+              verification_score: lead.verification_score || 0,
+              verification_data: lead.verification_data || {
                 place_id: lead.place_id,
                 rating: lead.rating,
                 review_count: lead.review_count,
               },
-            }, { $autoCancel: false });
+              // Meta Ads fields
+              source: lead.source || 'google_places',
+              source_url: lead.source_url,
+              source_id: lead.source_id,
+              discovery_context: lead.discovery_context,
+              ad_start_date: lead.ad_start_date,
+              ad_spend_indicator: lead.ad_spend_indicator,
+              ai_recommended: lead.ai_recommended,
+              ai_reason: lead.ai_reason,
+              ai_flags: lead.ai_flags,
+              review_status: lead.review_status || 'approved',
+            };
+
+            await pb.collection("leads").create(leadData, { $autoCancel: false });
             imported++;
           } catch (err: any) {
             console.error("Failed to import:", lead.business_name, err);
@@ -473,6 +598,65 @@ export default function DiscoverPage() {
               </div>
             </div>
 
+            {/* Source Selection */}
+            <div className="p-6 border-b border-white/[0.06]">
+              <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-4 block">Lead Source</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {DISCOVERY_SOURCES.map((src) => {
+                  const Icon = src.icon;
+                  const isActive = source === src.id;
+                  return (
+                    <button
+                      key={src.id}
+                      onClick={() => setSource(src.id as 'google_places' | 'meta_ads')}
+                      className={cn(
+                        "flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 text-left",
+                        isActive
+                          ? src.id === 'meta_ads'
+                            ? "bg-blue-500/10 border-blue-500/30"
+                            : "bg-violet-500/10 border-violet-500/30"
+                          : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                        isActive
+                          ? src.id === 'meta_ads'
+                            ? "bg-blue-500/20"
+                            : "bg-violet-500/20"
+                          : "bg-zinc-800/50"
+                      )}>
+                        <Icon className={cn(
+                          "h-5 w-5",
+                          isActive
+                            ? src.id === 'meta_ads'
+                              ? "text-blue-400"
+                              : "text-violet-400"
+                            : "text-zinc-500"
+                        )} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "font-medium",
+                            isActive ? "text-white" : "text-zinc-300"
+                          )}>
+                            {src.label}
+                          </span>
+                          {src.id === 'meta_ads' && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-400 font-medium">
+                              HOT
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-1">{src.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Form Fields */}
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -493,54 +677,70 @@ export default function DiscoverPage() {
                   </div>
                 </div>
 
-                {/* City Input */}
-                <div className="space-y-2 relative">
-                  <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">City (Optional)</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                    <Input
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="Leave empty for state-wide..."
-                      className="pl-10 bg-zinc-900/50 border-white/[0.08] text-zinc-200 placeholder:text-zinc-600 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/30 transition-all"
-                      onFocus={() => city.length >= 2 && citySuggestions.length > 0 && setShowSuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    />
-                  </div>
-                  {/* Suggestions */}
-                  {showSuggestions && (
-                    <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-white/[0.08] rounded-xl shadow-2xl max-h-48 overflow-y-auto">
-                      {citySuggestions.map((suggestion, idx) => (
-                        <button
-                          key={`${suggestion}-${idx}`}
-                          onClick={() => selectCity(suggestion)}
-                          className="w-full px-4 py-2.5 text-left text-sm text-zinc-300 hover:bg-white/[0.04] transition-colors first:rounded-t-xl last:rounded-b-xl"
-                        >
-                          <span className="font-medium">{suggestion}</span>
-                          <span className="text-zinc-500 ml-2">{state}</span>
-                        </button>
-                      ))}
+                {/* City Input - Only for Google Places */}
+                {source === 'google_places' && (
+                  <div className="space-y-2 relative">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">City (Optional)</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                      <Input
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="Leave empty for state-wide..."
+                        className="pl-10 bg-zinc-900/50 border-white/[0.08] text-zinc-200 placeholder:text-zinc-600 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/30 transition-all"
+                        onFocus={() => city.length >= 2 && citySuggestions.length > 0 && setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      />
                     </div>
-                  )}
-                </div>
-
-                {/* State Select */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">State</label>
-                  <div className="relative">
-                    <select
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      className="w-full appearance-none px-4 py-2.5 bg-zinc-900/50 border border-white/[0.08] rounded-xl text-sm text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/30 transition-all cursor-pointer"
-                    >
-                      <option value="">Select state...</option>
-                      {US_STATES.map((s) => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                    {/* Suggestions */}
+                    {showSuggestions && (
+                      <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-white/[0.08] rounded-xl shadow-2xl max-h-48 overflow-y-auto">
+                        {citySuggestions.map((suggestion, idx) => (
+                          <button
+                            key={`${suggestion}-${idx}`}
+                            onClick={() => selectCity(suggestion)}
+                            className="w-full px-4 py-2.5 text-left text-sm text-zinc-300 hover:bg-white/[0.04] transition-colors first:rounded-t-xl last:rounded-b-xl"
+                          >
+                            <span className="font-medium">{suggestion}</span>
+                            <span className="text-zinc-500 ml-2">{state}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
+
+                {/* State Select - Only for Google Places */}
+                {source === 'google_places' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">State</label>
+                    <div className="relative">
+                      <select
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        className="w-full appearance-none px-4 py-2.5 bg-zinc-900/50 border border-white/[0.08] rounded-xl text-sm text-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/30 transition-all cursor-pointer"
+                      >
+                        <option value="">Select state...</option>
+                        {US_STATES.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Meta Ads: US Location Badge */}
+                {source === 'meta_ads' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Location</label>
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                      <Globe className="h-4 w-4 text-blue-400" />
+                      <span className="text-sm text-blue-400 font-medium">United States</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-500">Meta Ads Library searches across all US regions</p>
+                  </div>
+                )}
 
                 {/* Target Count */}
                 <div className="space-y-2">
@@ -551,7 +751,7 @@ export default function DiscoverPage() {
                     <input
                       type="range"
                       min="10"
-                      max="200"
+                      max="100"
                       step="10"
                       value={targetCount}
                       onChange={(e) => setTargetCount(parseInt(e.target.value))}
@@ -560,20 +760,52 @@ export default function DiscoverPage() {
                   </div>
                   <div className="flex justify-between text-[10px] text-zinc-600">
                     <span>10</span>
-                    <span>200</span>
+                    <span>100</span>
                   </div>
                 </div>
+
+                {/* Meta Ads: Ad Recency */}
+                {source === 'meta_ads' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+                      <Clock className="inline h-3 w-3 mr-1" />
+                      Ad Recency
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={adRecencyDays}
+                        onChange={(e) => setAdRecencyDays(parseInt(e.target.value))}
+                        className="w-full appearance-none px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all cursor-pointer"
+                      >
+                        {AD_RECENCY_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400 pointer-events-none" />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Bar */}
               <div className="mt-6 flex items-center justify-between pt-6 border-t border-white/[0.06]">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] border border-white/[0.06]">
-                    <Zap className="h-3.5 w-3.5 text-violet-400" />
-                    <span className="text-xs text-zinc-400">
-                      Est. cost: <span className="text-zinc-200 font-medium">${(targetCount * 0.034).toFixed(2)}</span>
-                    </span>
-                  </div>
+                  {source === 'google_places' && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                      <Zap className="h-3.5 w-3.5 text-violet-400" />
+                      <span className="text-xs text-zinc-400">
+                        Est. cost: <span className="text-zinc-200 font-medium">${(targetCount * 0.034).toFixed(2)}</span>
+                      </span>
+                    </div>
+                  )}
+                  {source === 'meta_ads' && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <Shield className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="text-xs text-blue-400">
+                        Free via Meta Ads Library API
+                      </span>
+                    </div>
+                  )}
                   {apiCalls > 0 && (
                     <span className="text-xs text-zinc-500">
                       {apiCalls} API calls used
@@ -584,7 +816,7 @@ export default function DiscoverPage() {
                 <div className="flex items-center gap-3">
                   <Button
                     onClick={handleDiscover}
-                    disabled={loading || !state}
+                    disabled={loading || (source === 'google_places' && !state) || !niche}
                     className="h-10 px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
                     {loading ? (
@@ -595,7 +827,7 @@ export default function DiscoverPage() {
                     ) : (
                       <>
                         <Search className="h-4 w-4 mr-2" />
-                        Start Discovery
+                        {source === 'meta_ads' ? 'Find Advertisers' : 'Start Discovery'}
                       </>
                     )}
                   </Button>
@@ -609,11 +841,19 @@ export default function DiscoverPage() {
                     <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
                       <Loader2 className="h-4 w-4 text-violet-400 animate-spin" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-zinc-200">{progressMessage}</p>
-                      <p className="text-[11px] text-zinc-500">Discovery in progress...</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[11px] text-zinc-500">
+                          Step {Math.floor((progressPercent / 100) * progressSteps.length) + 1} of {progressSteps.length}
+                        </p>
+                        <span className="text-zinc-600">|</span>
+                        <p className="text-[11px] text-violet-400">
+                          ~{getEstimatedTime()} remaining
+                        </p>
+                      </div>
                     </div>
-                    <span className="ml-auto text-sm font-medium text-violet-400">{Math.round(progressPercent)}%</span>
+                    <span className="text-sm font-medium text-violet-400">{Math.round(progressPercent)}%</span>
                   </div>
                   <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div
@@ -622,7 +862,7 @@ export default function DiscoverPage() {
                     />
                   </div>
                   <p className="mt-3 text-[11px] text-zinc-500">
-                    You can navigate away. Discovery continues in the background.
+                    Finding leads with phone numbers. ETA: ~{Math.ceil(totalDuration / 60)} minutes max.
                   </p>
                 </div>
               )}

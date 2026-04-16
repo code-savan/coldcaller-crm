@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { pb, Lead } from "@/lib/pocketbase";
 import { LeadCard } from "@/components/LeadCard";
+import { ActiveCallScreen } from "@/components/ActiveCallScreen";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { initDevice, destroyDevice } from "@/lib/twilioDevice";
 import {
   Phone,
   Play,
@@ -76,6 +78,14 @@ export default function OperationsPage() {
       setCurrentSession(existingSession);
       setSessionActive(true);
     }
+
+    // Initialize Twilio device
+    initDevice(stored).catch(console.error);
+
+    // Cleanup Twilio device on unmount
+    return () => {
+      destroyDevice().catch(console.error);
+    };
   }, [router]);
 
   // Session timer - update every second
@@ -191,13 +201,13 @@ export default function OperationsPage() {
     }
   }, [currentLead?.id, leads, currentSession]);
 
-  const handleStartSession = () => {
+  const handleStartSession = async () => {
     // Create new session if none exists
     let session = currentSession;
     if (!session) {
       const stored = localStorage.getItem("username");
       if (stored) {
-        session = createSession(stored);
+        session = await createSession(stored);
         setCurrentSession(session);
       }
     } else if (session.status === 'paused') {
@@ -278,6 +288,12 @@ export default function OperationsPage() {
 
   return (
     <div className="h-full flex flex-col bg-[#0a0a0a]">
+      {/* Active Call Overlay */}
+      <ActiveCallScreen
+        onLeadUpdate={handleUpdateLead}
+        currentSession={currentSession}
+      />
+
       {/* Top Navigation Bar - Minimal & Clean */}
       <header className="h-16 px-6 flex items-center justify-between border-b border-white/[0.06] bg-[#0a0a0a]/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="flex items-center gap-6">

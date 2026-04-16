@@ -14,16 +14,21 @@
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
+    "@twilio/voice-sdk": "^2.18.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.400.0",
     "next": "14.2.5",
+    "openai": "^6.34.0",
     "pocketbase": "^0.21.3",
+    "puppeteer-core": "^24.40.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.3.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "twilio": "^5.13.1",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",

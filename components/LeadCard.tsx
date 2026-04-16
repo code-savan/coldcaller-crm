@@ -6,6 +6,9 @@ import { pb } from "@/lib/pocketbase";
 import { Button } from "@/components/ui/button";
 import { VerifyButton } from "./VerifyButton";
 import { Separator } from "@/components/ui/separator";
+import { useCallStore } from "@/lib/callState";
+import { getDevice, initDevice, isDeviceReady } from "@/lib/twilioDevice";
+import { toast } from "sonner";
 import {
   Phone,
   MapPin,
@@ -20,7 +23,13 @@ import {
   Clock,
   ArrowUpRight,
   StickyNote,
-  Sparkles
+  Sparkles,
+  Megaphone,
+  MapPinned,
+  AlertTriangle,
+  Bot,
+  ExternalLink,
+  Copy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +51,45 @@ const outcomes = [
   { id: "gatekeeper", label: "Gatekeeper", icon: User, color: "bg-violet-500", borderColor: "border-violet-500/30", textColor: "text-violet-400" },
 ];
 
+// Source badge config
+const sourceConfig = {
+  google_places: {
+    icon: MapPinned,
+    label: 'Google Places',
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/10',
+    borderColor: 'border-violet-500/20'
+  },
+  meta_ads: {
+    icon: Megaphone,
+    label: 'Meta Ads',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20'
+  },
+  facebook_group: {
+    icon: User,
+    label: 'Facebook',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/20'
+  },
+  linkedin: {
+    icon: User,
+    label: 'LinkedIn',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20'
+  },
+  manual: {
+    icon: User,
+    label: 'Manual',
+    color: 'text-zinc-400',
+    bgColor: 'bg-zinc-500/10',
+    borderColor: 'border-zinc-500/20'
+  }
+};
+
 export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: LeadCardProps) {
   const [notes, setNotes] = useState(lead.notes || "");
   const [callbackDate, setCallbackDate] = useState(lead.callback_datetime || "");
@@ -55,8 +103,43 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
     });
     onUpdate(updated as unknown as Lead);
 
-    // Open phone dialer
-    window.location.href = `tel:${lead.phone.replace(/\D/g, "")}`;
+    // Try Twilio calling
+    const username = localStorage.getItem("username");
+    if (!username) {
+      // Fallback to tel: link
+      window.location.href = `tel:${lead.phone.replace(/\D/g, "")}`;
+      return;
+    }
+
+    try {
+      // Get or initialize device
+      let device = getDevice();
+      if (!device || !isDeviceReady()) {
+        device = await initDevice(username);
+      }
+
+      if (!device) {
+        console.error("Failed to initialize Twilio device");
+        // Fallback to tel: link
+        window.location.href = `tel:${lead.phone.replace(/\D/g, "")}`;
+        return;
+      }
+
+      // Initiate call
+      const call = await device.connect({
+        params: {
+          To: lead.phone.replace(/\D/g, ""),
+        },
+      });
+
+      // Set active call in store
+      const { setActiveCall } = useCallStore.getState();
+      setActiveCall(call, lead);
+    } catch (error) {
+      console.error("Twilio call failed:", error);
+      // Fallback to tel: link silently
+      window.location.href = `tel:${lead.phone.replace(/\D/g, "")}`;
+    }
   };
 
   const handleOutcome = async (status: string) => {
@@ -91,6 +174,13 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
   };
 
   const isGoldMine = lead.verified && lead.verification_score >= 80;
+  const source = lead.source || 'google_places';
+  const sourceInfo = sourceConfig[source as keyof typeof sourceConfig] || sourceConfig.manual;
+  const SourceIcon = sourceInfo.icon;
+
+  // Check if flagged for review
+  const isFlagged = lead.review_status === 'flagged';
+  const aiConfidence = lead.ai_recommended ? 'high' : (lead.source_priority_score && lead.source_priority_score > 30 ? 'medium' : 'low');
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -117,7 +207,7 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {lead.niche && (
                       <span className="text-sm text-zinc-400">{lead.niche}</span>
                     )}
@@ -129,6 +219,16 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
                         </span>
                       </>
                     )}
+                    {/* Source Badge */}
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border",
+                      sourceInfo.bgColor,
+                      sourceInfo.borderColor,
+                      sourceInfo.color
+                    )}>
+                      <SourceIcon className="h-3 w-3" />
+                      {sourceInfo.label}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -136,9 +236,9 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
             <VerifyButton lead={lead} onVerified={onUpdate} />
           </div>
 
-          {/* Verification Score Badge */}
-          {lead.verified && (
-            <div className="mt-4 flex items-center gap-2">
+          {/* Verification Score & AI Badges */}
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            {lead.verified && (
               <div className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
                 lead.verification_score >= 80
@@ -166,8 +266,47 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
                   {lead.verification_score}/100 Verified
                 </span>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* AI Confidence Badge (for Meta Ads) */}
+            {source === 'meta_ads' && lead.ai_recommended !== undefined && (
+              <div className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
+                aiConfidence === 'high'
+                  ? "bg-emerald-500/5 border-emerald-500/20"
+                  : aiConfidence === 'medium'
+                  ? "bg-amber-500/5 border-amber-500/20"
+                  : "bg-red-500/5 border-red-500/20"
+              )}>
+                <Bot className={cn(
+                  "h-3.5 w-3.5",
+                  aiConfidence === 'high'
+                    ? "text-emerald-400"
+                    : aiConfidence === 'medium'
+                    ? "text-amber-400"
+                    : "text-red-400"
+                )} />
+                <span className={cn(
+                  "text-xs font-medium",
+                  aiConfidence === 'high'
+                    ? "text-emerald-400"
+                    : aiConfidence === 'medium'
+                    ? "text-amber-400"
+                    : "text-red-400"
+                )}>
+                  AI: {aiConfidence === 'high' ? 'Recommended' : aiConfidence === 'medium' ? 'Uncertain' : 'Flagged'}
+                </span>
+              </div>
+            )}
+
+            {/* Flagged Warning */}
+            {isFlagged && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/5 border border-red-500/20">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+                <span className="text-xs font-medium text-red-400">Needs Review</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Contact Information Grid */}
@@ -298,6 +437,53 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
             </div>
           )}
         </div>
+
+        {/* Warm Opener (for Meta Ads) */}
+        {lead.discovery_context && (
+          <div className="p-6 border-b border-white/[0.06] bg-blue-500/[0.02]">
+            <div className="flex items-center gap-2 mb-3">
+              <Megaphone className="h-4 w-4 text-blue-400" />
+              <p className="text-[10px] uppercase tracking-wider text-blue-400 font-semibold">Warm Opener</p>
+              {lead.ad_start_date && (
+                <span className="text-[10px] text-zinc-500">
+                  Ad started {Math.floor((Date.now() - new Date(lead.ad_start_date).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                </span>
+              )}
+            </div>
+            <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+              <p className="text-sm text-zinc-300 italic">&ldquo;{lead.discovery_context}&rdquo;</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(lead.discovery_context || '');
+                  toast.success('Copied to clipboard');
+                }}
+                className="mt-3 h-8 px-3 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+              >
+                <Copy className="h-3.5 w-3.5 mr-1.5" />
+                Copy Opener
+              </Button>
+            </div>
+            {lead.ai_reason && (
+              <p className="mt-2 text-[11px] text-zinc-500 flex items-center gap-1">
+                <Bot className="h-3 w-3" />
+                {lead.ai_reason}
+              </p>
+            )}
+            {lead.source_url && (
+              <a
+                href={lead.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300"
+              >
+                <ExternalLink className="h-3 w-3" />
+                View Ad Snapshot
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Call Notes */}
         <div className="p-6">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { pb } from "@/lib/pocketbase";
+import { pb, User } from "@/lib/pocketbase";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -35,16 +35,29 @@ export default function LoginPage() {
         filter: `username = "${username.trim()}"`,
       });
 
+      let user: User;
+
       if (existing.items.length === 0) {
         // Create new user
-        await pb.collection("users").create({
+        user = await pb.collection("users").create({
           username: username.trim(),
-        });
+          is_admin: false,
+          session_active: false,
+        }) as unknown as User;
+      } else {
+        user = existing.items[0] as unknown as User;
       }
 
-      // Store username and redirect
+      // Store username and admin status
       localStorage.setItem("username", username.trim());
-      router.push("/dashboard");
+      localStorage.setItem("isAdmin", user.is_admin ? "true" : "false");
+
+      // Redirect based on admin status
+      if (user.is_admin) {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       setError("Something went wrong. Please try again.");
       console.error(err);
