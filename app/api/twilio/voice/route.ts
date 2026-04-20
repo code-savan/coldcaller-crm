@@ -47,8 +47,15 @@ export async function POST(request: NextRequest) {
         console.error("[Twilio Voice Webhook] Invalid destination number:", cleanTo);
         voiceResponse.say("Sorry, invalid phone number. Goodbye.");
       } else {
-        // Dial the number
-        voiceResponse.dial({ callerId, timeout: 30 }).number(cleanTo);
+        // Dial the number with answerOnBridge to prevent early connect
+        const dial = voiceResponse.dial({
+          callerId,
+          timeout: 30,
+          answerOnBridge: true,
+          action: "/api/twilio/call-status",
+          method: "POST"
+        });
+        dial.number(cleanTo);
         console.log("[Twilio Voice Webhook] Dialing number:", cleanTo, "from:", callerId);
       }
     } else if (direction === "inbound") {
