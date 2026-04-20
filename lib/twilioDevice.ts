@@ -28,10 +28,11 @@ export async function initDevice(user: string): Promise<Device | null> {
     const { token } = await response.json();
     console.log("[TwilioDevice] Token received, length:", token.length);
 
-    // Initialize device
+    // Initialize device with edge location for better connectivity
     deviceInstance = new Device(token, {
       codecPreferences: ["opus", "pcmu"] as any,
       enableRingingState: true,
+      edge: "ashburn", // Try US East Coast edge for better connectivity
     } as any);
 
     // Register event handlers
@@ -41,7 +42,20 @@ export async function initDevice(user: string): Promise<Device | null> {
 
     deviceInstance.on("error", (error) => {
       console.error("[TwilioDevice] Device error:", error);
-      toast.error("Connection error — check your internet");
+      // Check for specific error types
+      if (error.message?.includes("websocket") || error.message?.includes("WebSocket")) {
+        toast.error("Network error — WebSocket connection failed. Check firewall/VPN.");
+      } else {
+        toast.error("Connection error — check your internet");
+      }
+    });
+
+    deviceInstance.on("unregistered", () => {
+      console.warn("[TwilioDevice] Device unregistered");
+    });
+
+    deviceInstance.on("connecting", (connection) => {
+      console.log("[TwilioDevice] Connecting:", connection);
     });
 
     deviceInstance.on("connect", (connection) => {
