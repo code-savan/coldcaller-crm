@@ -93,9 +93,21 @@ export default function DialerPage() {
     setIsCalling(true);
 
     try {
+      // Resume AudioContext on user gesture (required by browser)
+      if (typeof window !== 'undefined' && window.AudioContext) {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+          console.log("[Dialer] AudioContext resumed");
+        }
+      }
+
       // Get or initialize device
       let device = getDevice();
+      console.log("[Dialer] Device state:", device ? "exists" : "null", "Ready:", isDeviceReady());
+
       if (!device || !isDeviceReady()) {
+        console.log("[Dialer] Initializing device for user:", username);
         device = await initDevice(username);
       }
 
@@ -115,12 +127,21 @@ export default function DialerPage() {
       };
 
       // Initiate call using WebSocket
-      console.log("[Dialer] Initiating WebSocket call to:", formattedNumber);
+      console.log("[Dialer] Calling device.connect with To:", formattedNumber);
       const call = await device.connect({
         params: {
           To: formattedNumber,
         },
       });
+
+      console.log("[Dialer] Call object created:", call);
+
+      // Add detailed event listeners
+      call.on("accept", () => console.log("[Dialer] Call accepted"));
+      call.on("disconnect", (reason) => console.log("[Dialer] Call disconnected:", reason));
+      call.on("error", (error) => console.error("[Dialer] Call error:", error));
+      call.on("ringing", (hasEarlyMedia) => console.log("[Dialer] Ringing, early media:", hasEarlyMedia));
+      call.on("cancel", () => console.log("[Dialer] Call cancelled"));
 
       // Set active call in store
       const { setActiveCall } = useCallStore.getState();
