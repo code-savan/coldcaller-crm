@@ -28,12 +28,49 @@ export async function initDevice(user: string): Promise<Device | null> {
     const { token } = await response.json();
     console.log("[TwilioDevice] Token received, length:", token.length);
 
-    // Initialize device with edge location for better connectivity
-    deviceInstance = new Device(token, {
-      codecPreferences: ["opus", "pcmu"] as any,
-      enableRingingState: true,
-      edge: "ashburn", // Try US East Coast edge for better connectivity
-    } as any);
+    // Try multiple edge locations for better connectivity
+    const edges = ["ashburn", "dublin", "singapore", "sydney", "roaming"];
+    let lastError = null;
+
+    for (const edge of edges) {
+      try {
+        console.log(`[TwilioDevice] Trying edge: ${edge}`);
+
+        // Initialize device with edge location
+        deviceInstance = new Device(token, {
+          codecPreferences: ["opus", "pcmu"] as any,
+          enableRingingState: true,
+          edge: edge,
+          maxCallSignalingTimeoutMs: 30000,
+        } as any);
+
+        // Try to register
+        await deviceInstance.register();
+        console.log(`[TwilioDevice] Successfully registered on edge: ${edge}`);
+        break; // Success, exit the loop
+      } catch (error) {
+        console.error(`[TwilioDevice] Failed to register on ${edge}:`, error);
+        lastError = error;
+
+        // Destroy failed device before trying next edge
+        if (deviceInstance) {
+          try {
+            deviceInstance.destroy();
+          } catch (e) {
+            // Ignore destroy errors
+          }
+          deviceInstance = null;
+        }
+
+        // Continue to next edge
+        continue;
+      }
+    }
+
+    if (!deviceInstance) {
+      console.error("[TwilioDevice] Failed to register on all edges");
+      throw lastError || new Error("Failed to initialize Twilio device on any edge");
+    }
 
     // Register event handlers
     deviceInstance.on("registered", () => {
@@ -83,9 +120,6 @@ export async function initDevice(user: string): Promise<Device | null> {
       // Set incoming call in store
       store.setIncomingCall(call);
     });
-
-    // Register device
-    await deviceInstance.register();
 
     // Set up token refresh every 55 minutes
     setupTokenRefresh(user);

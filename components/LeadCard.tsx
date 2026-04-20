@@ -8,6 +8,7 @@ import { VerifyButton } from "./VerifyButton";
 import { Separator } from "@/components/ui/separator";
 import { useCallStore } from "@/lib/callState";
 import { getDevice, initDevice, isDeviceReady } from "@/lib/twilioDevice";
+import type { Call } from "@twilio/voice-sdk";
 import { toast } from "sonner";
 import {
   Phone,
@@ -96,6 +97,20 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
   const [saving, setSaving] = useState(false);
 
   const handleCall = async () => {
+    // Resume audio context (browser requires user gesture)
+    try {
+      const audioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (audioContext) {
+        const ctx = new audioContext();
+        if (ctx.state === "suspended") {
+          await ctx.resume();
+          console.log("[Call] AudioContext resumed");
+        }
+      }
+    } catch (e) {
+      console.log("[Call] AudioContext resume failed:", e);
+    }
+
     // Update call count and last called
     const updated = await pb.collection("leads").update(lead.id, {
       call_count: (lead.call_count || 0) + 1,
@@ -134,27 +149,54 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
 
       if (!device) {
         console.error("[Call] Failed to initialize Twilio device");
-        toast.error("Could not initialize calling. Falling back to phone dialer.");
-        window.location.href = `tel:${cleanedPhone}`;
+        toast.error("Web calling unavailable. Using phone dialer.");
+        window.location.href = `tel:${cleanedPhone.replace(/^\+/, "")}`;
+        return;
+      }
+
+      // Check device state before connecting
+      const deviceState = (device as any).state;
+      console.log("[Call] Device state before connect:", deviceState);
+
+      if (deviceState !== "registered") {
+        console.error("[Call] Device not registered, state:", deviceState);
+        toast.error("Connection not ready. Using phone dialer.");
+        window.location.href = `tel:${cleanedPhone.replace(/^\+/, "")}`;
         return;
       }
 
       console.log("[Call] Connecting to Twilio with params:", { To: cleanedPhone });
 
-      // Initiate call
-      const call = await device.connect({
+      // Initiate call with timeout
+      const callPromise = device.connect({
         params: {
           To: cleanedPhone,
         },
       });
 
+      // Add a timeout - if call doesn't connect in 10 seconds, fallback
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Call connection timeout")), 10000);
+      });
+
+      const call = (await Promise.race([callPromise, timeoutPromise])) as Call;
+
       console.log("[Call] Twilio call object created:", call);
 
       // Add event listeners for debugging
       call.on("accept", () => console.log("[Call] Call accepted"));
-      call.on("disconnect", (reason) => console.log("[Call] Call disconnected:", reason));
+      call.on("disconnect", (reason) => {
+        console.log("[Call] Call disconnected:", reason);
+        // If disconnected immediately, show toast
+        if (reason && reason.error) {
+          toast.error("Call failed: " + (reason.error.message || "Connection error"));
+        }
+      });
       call.on("cancel", () => console.log("[Call] Call cancelled"));
-      call.on("error", (error) => console.error("[Call] Call error:", error));
+      call.on("error", (error) => {
+        console.error("[Call] Call error:", error);
+        toast.error("Call error: " + (error.message || "Unknown error"));
+      });
       call.on("ringing", (hasEarlyMedia) => console.log("[Call] Ringing, early media:", hasEarlyMedia));
 
       // Set active call in store
@@ -162,8 +204,8 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
       setActiveCall(call, lead);
     } catch (error) {
       console.error("[Call] Twilio call failed:", error);
-      toast.error("Call failed. Falling back to phone dialer.");
-      window.location.href = `tel:${cleanedPhone}`;
+      toast.error("Web call failed. Using phone dialer.");
+      window.location.href = `tel:${cleanedPhone.replace(/^\+/, "")}`;
     }
   };
 
