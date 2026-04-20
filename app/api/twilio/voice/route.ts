@@ -23,15 +23,12 @@ export async function POST(request: NextRequest) {
     console.log("[Twilio Voice Webhook] All params:", allParams);
     console.log("[Twilio Voice Webhook] Direction:", direction, "To:", to, "From:", from, "CallSid:", callSid, "CallStatus:", callStatus);
 
-    if (direction === "inbound") {
-      // Inbound call - route to the client (username is the To parameter)
-      if (to) {
-        voiceResponse.dial().client(to);
-      } else {
-        voiceResponse.say("Sorry, we could not route your call. Goodbye.");
-      }
-    } else {
-      // Outbound call - dial the number
+    // Check if this is a browser client making an outbound call
+    // When From starts with "client:", the browser is calling out
+    const isBrowserClientCalling = from?.startsWith("client:");
+
+    if (isBrowserClientCalling) {
+      // Browser client is making an outbound call - dial the phone number
       const callerId = process.env.TWILIO_PHONE_NUMBER;
 
       // Clean and format the phone number to E.164
@@ -41,7 +38,7 @@ export async function POST(request: NextRequest) {
         cleanTo = "+" + cleanTo.replace(/^1/, "").replace(/^(\d{10})$/, "1$1");
       }
 
-      console.log("[Twilio Voice Webhook] CallerId:", callerId, "Raw To:", to, "Clean To:", cleanTo);
+      console.log("[Twilio Voice Webhook] Outbound from client - CallerId:", callerId, "Raw To:", to, "Clean To:", cleanTo);
 
       if (!callerId) {
         console.error("[Twilio Voice Webhook] Missing TWILIO_PHONE_NUMBER environment variable");
@@ -50,9 +47,24 @@ export async function POST(request: NextRequest) {
         console.error("[Twilio Voice Webhook] Invalid destination number:", cleanTo);
         voiceResponse.say("Sorry, invalid phone number. Goodbye.");
       } else {
-        // Remove answerOnBridge to prevent early disconnects
+        // Dial the number
         voiceResponse.dial({ callerId, timeout: 30 }).number(cleanTo);
         console.log("[Twilio Voice Webhook] Dialing number:", cleanTo, "from:", callerId);
+      }
+    } else if (direction === "inbound") {
+      // True inbound call from external phone - route to the client
+      if (to) {
+        voiceResponse.dial().client(to);
+      } else {
+        voiceResponse.say("Sorry, we could not route your call. Goodbye.");
+      }
+    } else {
+      // Fallback for other cases
+      console.log("[Twilio Voice Webhook] Unknown direction, routing to client if To provided");
+      if (to) {
+        voiceResponse.dial().client(to);
+      } else {
+        voiceResponse.say("Sorry, we could not route your call. Goodbye.");
       }
     }
 
