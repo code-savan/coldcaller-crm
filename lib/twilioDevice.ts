@@ -36,12 +36,19 @@ export async function initDevice(user: string): Promise<Device | null> {
       try {
         console.log(`[TwilioDevice] Trying edge: ${edge}`);
 
-        // Initialize device with edge location
+        // Initialize device with edge location and ICE servers
         deviceInstance = new Device(token, {
           codecPreferences: ["opus", "pcmu"] as any,
           enableRingingState: true,
           edge: edge,
+          region: "us1",
           maxCallSignalingTimeoutMs: 30000,
+          rtcConfiguration: {
+            iceServers: [
+              { urls: "stun:stun.l.google.com:19302" },
+              { urls: "stun:stun1.l.google.com:19302" },
+            ],
+          },
         } as any);
 
         // Try to register
@@ -101,6 +108,21 @@ export async function initDevice(user: string): Promise<Device | null> {
 
     deviceInstance.on("disconnect", (connection) => {
       console.log("[TwilioDevice] Connection disconnected:", connection);
+    });
+
+    // Handle transport close (WebSocket disconnection)
+    deviceInstance.on("transportClose", () => {
+      console.warn("[TwilioDevice] WebSocket transport closed");
+    });
+
+    deviceInstance.on("transportError", (error) => {
+      console.error("[TwilioDevice] WebSocket transport error:", error);
+    });
+
+    // Handle device destruction
+    deviceInstance.on("destroyed", () => {
+      console.warn("[TwilioDevice] Device destroyed");
+      deviceInstance = null;
     });
 
     deviceInstance.on("incoming", (call) => {
