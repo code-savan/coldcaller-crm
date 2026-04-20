@@ -8,7 +8,7 @@ import { ActiveCallScreen } from "@/components/ActiveCallScreen";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { initDevice, destroyDevice } from "@/lib/twilioDevice";
+// REMOVED: WebSocket device imports - using REST API instead
 import {
   Phone,
   Play,
@@ -79,13 +79,7 @@ export default function OperationsPage() {
       setSessionActive(true);
     }
 
-    // Initialize Twilio device
-    initDevice(stored).catch(console.error);
-
-    // Cleanup Twilio device on unmount
-    return () => {
-      destroyDevice().catch(console.error);
-    };
+    // REMOVED: WebSocket device initialization - using REST API instead
   }, [router]);
 
   // Session timer - update every second
