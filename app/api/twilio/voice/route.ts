@@ -25,18 +25,25 @@ export async function POST(request: NextRequest) {
       // Outbound call - dial the number
       const callerId = process.env.TWILIO_PHONE_NUMBER;
 
-      console.log("[Twilio Voice Webhook] CallerId:", callerId, "Destination:", to);
+      // Clean and format the phone number to E.164
+      let cleanTo = to?.trim().replace(/\s/g, "").replace(/[^\d+]/g, "") || "";
+      if (cleanTo && !cleanTo.startsWith("+")) {
+        // Assume US number if no country code
+        cleanTo = "+" + cleanTo.replace(/^1/, "").replace(/^(\d{10})$/, "1$1");
+      }
+
+      console.log("[Twilio Voice Webhook] CallerId:", callerId, "Raw To:", to, "Clean To:", cleanTo);
 
       if (!callerId) {
         console.error("[Twilio Voice Webhook] Missing TWILIO_PHONE_NUMBER environment variable");
         voiceResponse.say("Sorry, the call cannot be completed. Goodbye.");
-      } else if (!to) {
-        console.error("[Twilio Voice Webhook] No destination number provided");
-        voiceResponse.say("Sorry, no destination number provided. Goodbye.");
+      } else if (!cleanTo || cleanTo.length < 10) {
+        console.error("[Twilio Voice Webhook] Invalid destination number:", cleanTo);
+        voiceResponse.say("Sorry, invalid phone number. Goodbye.");
       } else {
         // Remove answerOnBridge to prevent early disconnects
-        voiceResponse.dial({ callerId, timeout: 30 }).number(to);
-        console.log("[Twilio Voice Webhook] Dialing number:", to, "from:", callerId);
+        voiceResponse.dial({ callerId, timeout: 30 }).number(cleanTo);
+        console.log("[Twilio Voice Webhook] Dialing number:", cleanTo, "from:", callerId);
       }
     }
 
