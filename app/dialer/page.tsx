@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-// REMOVED: WebSocket device imports - using REST API instead
+import { initDevice, getDevice, isDeviceReady, destroyDevice } from "@/lib/twilioDevice";
 import { useCallStore } from "@/lib/callState";
 import { ActiveCallScreen } from "@/components/ActiveCallScreen";
 import { toast } from "sonner";
@@ -41,7 +41,12 @@ export default function DialerPage() {
     }
     setUsername(stored);
 
-    // REMOVED: WebSocket device initialization - using REST API instead
+    // Initialize Twilio device for browser calling
+    initDevice(stored).catch(console.error);
+
+    return () => {
+      destroyDevice().catch(console.error);
+    };
   }, [router]);
 
   const handleDigit = useCallback((digit: string) => {
@@ -69,75 +74,63 @@ export default function DialerPage() {
   };
 
   const handleCall = async () => {
-    let cleanedNumber = phoneNumber.replace(/\D/g, "");
+    const cleanedNumber = phoneNumber.replace(/\D/g, "");
     if (cleanedNumber.length < 10) {
       toast.error("Please enter a valid phone number");
       return;
     }
 
     // Ensure E.164 format
+    let formattedNumber = cleanedNumber;
     if (cleanedNumber.length === 10) {
-      cleanedNumber = "+1" + cleanedNumber;
+      formattedNumber = "+1" + cleanedNumber;
     } else if (cleanedNumber.length === 11 && cleanedNumber.startsWith("1")) {
-      cleanedNumber = "+" + cleanedNumber;
+      formattedNumber = "+" + cleanedNumber;
     } else if (!cleanedNumber.startsWith("+")) {
-      cleanedNumber = "+" + cleanedNumber;
+      formattedNumber = "+" + cleanedNumber;
     }
 
     setIsCalling(true);
 
     try {
-      // Use REST API to make call
-      const response = await fetch("/api/twilio/call", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: cleanedNumber,
-          from: username,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to initiate call");
+      // Get or initialize device
+      let device = getDevice();
+      if (!device || !isDeviceReady()) {
+        device = await initDevice(username);
       }
 
-      console.log("[Dialer] Call initiated via REST API:", result);
-      toast.success("Call initiated! Your phone should ring shortly.");
+      if (!device) {
+        toast.error("Failed to initialize calling device");
+        return;
+      }
 
       // Create a mock lead for the call screen
       const mockLead = {
         id: "manual-dial",
         business_name: "Manual Dial",
-        phone: cleanedNumber,
+        phone: formattedNumber,
         contact_name: "",
         city: "",
         state: "",
       };
 
-      // Create a mock call object for the UI
-      const mockCall = {
-        sid: result.callSid,
-        direction: "outbound-api",
-        status: result.status,
-        disconnect: () => {},
-        mute: () => {},
-        unmute: () => {},
-        accept: () => {},
-        reject: () => {},
-        on: () => {},
-      };
+      // Initiate call using WebSocket
+      console.log("[Dialer] Initiating WebSocket call to:", formattedNumber);
+      const call = await device.connect({
+        params: {
+          To: formattedNumber,
+        },
+      });
 
       // Set active call in store
       const { setActiveCall } = useCallStore.getState();
-      setActiveCall(mockCall as any, mockLead as any);
+      setActiveCall(call, mockLead as any);
+
+      toast.success("Calling...");
     } catch (error) {
       console.error("[Dialer] Call failed:", error);
       toast.error("Failed to place call. Falling back to phone dialer.");
-      window.location.href = `tel:${cleanedNumber}`;
+      window.location.href = `tel:${formattedNumber}`;
     } finally {
       setIsCalling(false);
     }
