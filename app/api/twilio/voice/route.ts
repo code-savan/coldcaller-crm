@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
     // Create TwiML response
     const voiceResponse = new twiml.VoiceResponse();
 
+    console.log("[Twilio Voice Webhook] Direction:", direction, "To:", to, "CallStatus:", callStatus);
+
     if (direction === "inbound") {
       // Inbound call - route to the client (username is the To parameter)
       if (to) {
@@ -23,13 +25,18 @@ export async function POST(request: NextRequest) {
       // Outbound call - dial the number
       const callerId = process.env.TWILIO_PHONE_NUMBER;
 
+      console.log("[Twilio Voice Webhook] CallerId:", callerId, "Destination:", to);
+
       if (!callerId) {
-        console.error("Missing TWILIO_PHONE_NUMBER environment variable");
+        console.error("[Twilio Voice Webhook] Missing TWILIO_PHONE_NUMBER environment variable");
         voiceResponse.say("Sorry, the call cannot be completed. Goodbye.");
       } else if (!to) {
+        console.error("[Twilio Voice Webhook] No destination number provided");
         voiceResponse.say("Sorry, no destination number provided. Goodbye.");
       } else {
-        voiceResponse.dial({ callerId, timeout: 30, answerOnBridge: true }).number(to);
+        // Remove answerOnBridge to prevent early disconnects
+        voiceResponse.dial({ callerId, timeout: 30 }).number(to);
+        console.log("[Twilio Voice Webhook] Dialing number:", to, "from:", callerId);
       }
     }
 

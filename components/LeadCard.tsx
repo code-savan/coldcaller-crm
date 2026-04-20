@@ -111,34 +111,59 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
       return;
     }
 
+    let cleanedPhone = lead.phone.replace(/\D/g, "");
+    // Ensure E.164 format (add + if not present for US numbers starting with 1)
+    if (cleanedPhone.length === 10) {
+      cleanedPhone = "+1" + cleanedPhone;
+    } else if (cleanedPhone.length === 11 && cleanedPhone.startsWith("1")) {
+      cleanedPhone = "+" + cleanedPhone;
+    } else if (!cleanedPhone.startsWith("+")) {
+      cleanedPhone = "+" + cleanedPhone;
+    }
+    console.log("[Call] Initiating call to:", cleanedPhone, "Original:", lead.phone);
+
     try {
       // Get or initialize device
       let device = getDevice();
+      console.log("[Call] Device state:", device ? "exists" : "null", "Ready:", isDeviceReady());
+
       if (!device || !isDeviceReady()) {
+        console.log("[Call] Initializing device for user:", username);
         device = await initDevice(username);
       }
 
       if (!device) {
-        console.error("Failed to initialize Twilio device");
-        // Fallback to tel: link
-        window.location.href = `tel:${lead.phone.replace(/\D/g, "")}`;
+        console.error("[Call] Failed to initialize Twilio device");
+        toast.error("Could not initialize calling. Falling back to phone dialer.");
+        window.location.href = `tel:${cleanedPhone}`;
         return;
       }
+
+      console.log("[Call] Connecting to Twilio with params:", { To: cleanedPhone });
 
       // Initiate call
       const call = await device.connect({
         params: {
-          To: lead.phone.replace(/\D/g, ""),
+          To: cleanedPhone,
         },
       });
+
+      console.log("[Call] Twilio call object created:", call);
+
+      // Add event listeners for debugging
+      call.on("accept", () => console.log("[Call] Call accepted"));
+      call.on("disconnect", (reason) => console.log("[Call] Call disconnected:", reason));
+      call.on("cancel", () => console.log("[Call] Call cancelled"));
+      call.on("error", (error) => console.error("[Call] Call error:", error));
+      call.on("ringing", (hasEarlyMedia) => console.log("[Call] Ringing, early media:", hasEarlyMedia));
 
       // Set active call in store
       const { setActiveCall } = useCallStore.getState();
       setActiveCall(call, lead);
     } catch (error) {
-      console.error("Twilio call failed:", error);
-      // Fallback to tel: link silently
-      window.location.href = `tel:${lead.phone.replace(/\D/g, "")}`;
+      console.error("[Call] Twilio call failed:", error);
+      toast.error("Call failed. Falling back to phone dialer.");
+      window.location.href = `tel:${cleanedPhone}`;
     }
   };
 

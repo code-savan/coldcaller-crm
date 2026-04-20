@@ -26,6 +26,7 @@ export async function initDevice(user: string): Promise<Device | null> {
     }
 
     const { token } = await response.json();
+    console.log("[TwilioDevice] Token received, length:", token.length);
 
     // Initialize device
     deviceInstance = new Device(token, {
@@ -35,15 +36,25 @@ export async function initDevice(user: string): Promise<Device | null> {
 
     // Register event handlers
     deviceInstance.on("registered", () => {
-      console.log("Twilio device registered");
+      console.log("[TwilioDevice] Device registered successfully");
     });
 
     deviceInstance.on("error", (error) => {
-      console.error("Twilio device error:", error);
+      console.error("[TwilioDevice] Device error:", error);
       toast.error("Connection error — check your internet");
     });
 
+    deviceInstance.on("connect", (connection) => {
+      console.log("[TwilioDevice] Connection established:", connection);
+    });
+
+    deviceInstance.on("disconnect", (connection) => {
+      console.log("[TwilioDevice] Connection disconnected:", connection);
+    });
+
     deviceInstance.on("incoming", (call) => {
+      console.log("[TwilioDevice] Incoming call:", call);
+
       // Import dynamically to avoid circular dependency
       const { useCallStore } = require("./callState");
       const store = useCallStore.getState();

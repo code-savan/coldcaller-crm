@@ -25,9 +25,20 @@ export async function GET(request: NextRequest) {
     const apiKey = process.env.TWILIO_API_KEY;
     const apiSecret = process.env.TWILIO_API_SECRET;
     const twimlAppSid = process.env.TWILIO_TWIML_APP_SID;
+    const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    console.log("[Twilio Token] Request for user:", username);
+    console.log("[Twilio Token] Env vars check:", {
+      hasAccountSid: !!accountSid,
+      hasApiKey: !!apiKey,
+      hasApiSecret: !!apiSecret,
+      hasTwimlAppSid: !!twimlAppSid,
+      hasPhoneNumber: !!phoneNumber,
+      accountSidPrefix: accountSid ? accountSid.substring(0, 6) : 'missing',
+    });
 
     if (!accountSid || !apiKey || !apiSecret || !twimlAppSid) {
-      console.error("Missing Twilio environment variables");
+      console.error("[Twilio Token] Missing required Twilio environment variables");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
