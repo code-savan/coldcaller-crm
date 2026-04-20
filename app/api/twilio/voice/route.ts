@@ -5,14 +5,23 @@ export async function POST(request: NextRequest) {
   try {
     // Parse form data from Twilio webhook
     const formData = await request.formData();
-    const to = formData.get("To") as string;
-    const direction = formData.get("Direction") as string;
-    const callStatus = formData.get("CallStatus") as string;
+    // Handle both uppercase and lowercase parameter names
+    const to = (formData.get("To") || formData.get("to")) as string;
+    const direction = (formData.get("Direction") || formData.get("direction")) as string;
+    const callStatus = (formData.get("CallStatus") || formData.get("callStatus")) as string;
+    const from = (formData.get("From") || formData.get("from")) as string;
+    const callSid = (formData.get("CallSid") || formData.get("callSid")) as string;
 
     // Create TwiML response
     const voiceResponse = new twiml.VoiceResponse();
 
-    console.log("[Twilio Voice Webhook] Direction:", direction, "To:", to, "CallStatus:", callStatus);
+    // Log all parameters for debugging
+    const allParams: Record<string, string> = {};
+    formData.forEach((value, key) => {
+      allParams[key] = value.toString();
+    });
+    console.log("[Twilio Voice Webhook] All params:", allParams);
+    console.log("[Twilio Voice Webhook] Direction:", direction, "To:", to, "From:", from, "CallSid:", callSid, "CallStatus:", callStatus);
 
     if (direction === "inbound") {
       // Inbound call - route to the client (username is the To parameter)

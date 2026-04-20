@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { VerifyButton } from "./VerifyButton";
 import { Separator } from "@/components/ui/separator";
 import { useCallStore } from "@/lib/callState";
-import { getDevice, initDevice, isDeviceReady } from "@/lib/twilioDevice";
-import type { Call } from "@twilio/voice-sdk";
 import { toast } from "sonner";
 import {
   Phone,
@@ -138,72 +136,59 @@ export function LeadCard({ lead, onUpdate, onNext, onPrev, hasNext, hasPrev }: L
     console.log("[Call] Initiating call to:", cleanedPhone, "Original:", lead.phone);
 
     try {
-      // Get or initialize device
-      let device = getDevice();
-      console.log("[Call] Device state:", device ? "exists" : "null", "Ready:", isDeviceReady());
+      // Use REST API to make call instead of WebSocket (more reliable)
+      console.log("[Call] Using REST API to make call to:", cleanedPhone);
 
-      if (!device || !isDeviceReady()) {
-        console.log("[Call] Initializing device for user:", username);
-        device = await initDevice(username);
-      }
-
-      if (!device) {
-        console.error("[Call] Failed to initialize Twilio device");
-        toast.error("Web calling unavailable. Using phone dialer.");
-        window.location.href = `tel:${cleanedPhone.replace(/^\+/, "")}`;
-        return;
-      }
-
-      // Check device state before connecting
-      const deviceState = (device as any).state;
-      console.log("[Call] Device state before connect:", deviceState);
-
-      if (deviceState !== "registered") {
-        console.error("[Call] Device not registered, state:", deviceState);
-        toast.error("Connection not ready. Using phone dialer.");
-        window.location.href = `tel:${cleanedPhone.replace(/^\+/, "")}`;
-        return;
-      }
-
-      console.log("[Call] Connecting to Twilio with params:", { To: cleanedPhone });
-
-      // Initiate call with timeout
-      const callPromise = device.connect({
-        params: {
-          To: cleanedPhone,
+      const response = await fetch("/api/twilio/call", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          to: cleanedPhone,
+          from: username,
+        }),
       });
 
-      // Add a timeout - if call doesn't connect in 10 seconds, fallback
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Call connection timeout")), 10000);
-      });
+      const result = await response.json();
 
-      const call = (await Promise.race([callPromise, timeoutPromise])) as Call;
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to initiate call");
+      }
 
-      console.log("[Call] Twilio call object created:", call);
+      console.log("[Call] Call initiated via REST API:", result);
+      toast.success("Call initiated! Your phone should ring shortly.");
 
-      // Add event listeners for debugging
-      call.on("accept", () => console.log("[Call] Call accepted"));
-      call.on("disconnect", (reason) => {
-        console.log("[Call] Call disconnected:", reason);
-        // If disconnected immediately, show toast
-        if (reason && reason.error) {
-          toast.error("Call failed: " + (reason.error.message || "Connection error"));
-        }
-      });
-      call.on("cancel", () => console.log("[Call] Call cancelled"));
-      call.on("error", (error) => {
-        console.error("[Call] Call error:", error);
-        toast.error("Call error: " + (error.message || "Unknown error"));
-      });
-      call.on("ringing", (hasEarlyMedia) => console.log("[Call] Ringing, early media:", hasEarlyMedia));
+      // Create a mock call object for the UI
+      const mockCall = {
+        sid: result.callSid,
+        direction: "OUTGOING",
+        parameters: {
+          To: cleanedPhone,
+          From: username,
+          CallSid: result.callSid,
+        },
+        status: () => result.status,
+        disconnect: () => {
+          console.log("[Call] Disconnecting call:", result.callSid);
+          // Note: Would need to implement call termination via REST API
+        },
+        on: (event: string, handler: any) => {
+          console.log(`[Call] Mock call event registered: ${event}`);
+        },
+        mute: (muted: boolean) => {
+          console.log("[Call] Mute not implemented for REST API calls");
+        },
+        sendDigits: (digits: string) => {
+          console.log("[Call] Send digits not implemented for REST API calls");
+        },
+      };
 
       // Set active call in store
       const { setActiveCall } = useCallStore.getState();
-      setActiveCall(call, lead);
+      setActiveCall(mockCall, lead);
     } catch (error) {
-      console.error("[Call] Twilio call failed:", error);
+      console.error("[Call] Twilio REST call failed:", error);
       toast.error("Web call failed. Using phone dialer.");
       window.location.href = `tel:${cleanedPhone.replace(/^\+/, "")}`;
     }

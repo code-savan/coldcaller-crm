@@ -105,11 +105,22 @@ export function ActiveCallScreen({ onLeadUpdate, currentSession }: ActiveCallScr
     activeCall.on("disconnect", (call: any) => {
       console.log("Call disconnected:", {
         direction: call.direction,
-        status: call.status,
+        status: call.status(),
         from: call.parameters?.From,
         to: call.parameters?.To,
         sid: call.parameters?.CallSid,
+        error: call.error,
+        _debug: call._debug,
       });
+
+      // Check for specific disconnect reasons
+      if (call.error) {
+        console.error("Call disconnected with error:", call.error);
+        toast.error(`Call failed: ${call.error.message || 'Connection error'}`);
+      } else if (call.status() === "closed") {
+        console.warn("Call closed - possible network/WebSocket issue");
+      }
+
       handleDisconnect();
     });
     activeCall.on("accept", (call: any) => {
@@ -136,6 +147,13 @@ export function ActiveCallScreen({ onLeadUpdate, currentSession }: ActiveCallScr
     });
     activeCall.on("muted", (isMuted: boolean) => {
       console.log("Call muted:", isMuted);
+    });
+    activeCall.on("warning", (warningName: string) => {
+      console.warn("Call warning:", warningName);
+    });
+    activeCall.on("failed", (error: any) => {
+      console.error("Call failed event:", error);
+      toast.error(`Call failed: ${error.message || 'Unknown error'}`);
     });
 
     return () => {
