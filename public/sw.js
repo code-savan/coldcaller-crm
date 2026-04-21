@@ -1,18 +1,22 @@
 const CACHE_NAME = 'callflow-v1';
 const STATIC_ASSETS = [
-  '/',
-  '/login',
-  '/dashboard',
   '/manifest.json',
   '/logo1.png',
   '/logo.png'
 ];
 
-// Install event - cache static assets
+// Install event - cache static assets with error handling
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      // Cache individually to prevent total failure if one resource fails
+      return Promise.all(
+        STATIC_ASSETS.map(url =>
+          cache.add(url).catch(err => {
+            console.warn('[SW] Failed to cache:', url, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -36,10 +40,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
-  
+
   // Skip API calls
   if (event.request.url.includes('/api/')) return;
-  
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
